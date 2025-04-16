@@ -22,14 +22,16 @@ Kolumny:
 
 ### 1.3. journeys
 Kolumny:
-- id UUID PRIMARY KEY  
+- id BIGSERIAL PRIMARY KEY  
 - destination VARCHAR NOT NULL  
 - departure_date DATE NOT NULL  
 - return_date DATE NOT NULL  
 - activities VARCHAR,  
 - additional_notes TEXT NOT NULL  
 - user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE  
-- generation_ids UUID[] DEFAULT '{}' -- lista identyfikatorów generacji  
+- generation_ids BIGSERIAL[] DEFAULT '{}' -- lista identyfikatorów generacji
+- created_at: TIMESTAMPTZ NOT NULL DEFAULT now()
+- updated_at: TIMESTAMPTZ NOT NULL DEFAULT now() 
 Ograniczenia:
 - CHECK (departure_date <= return_date)
 
@@ -37,29 +39,30 @@ Ograniczenia:
 
 ### 1.4. generations
 Kolumny:
-- id UUID PRIMARY KEY  
-- journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE
+- id BIGSERIAL PRIMARY KEY  
+- journey_id BIGSERIAL NOT NULL REFERENCES journeys(id)
 - model VARCHAR NOT NULL  
 - generated_count INTEGER NOT NULL DEFAULT 0  
 - accepted_unedited_count INTEGER NOT NULL DEFAULT 0  
 - accepted_edited_count INTEGER NOT NULL DEFAULT 0  
 - source_text_hash TEXT NOT NULL  
 - source_text_length INTEGER NOT NULL  
-- created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL  
-- edited_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL
+- created_at TIMESTAMPTZ NOT NULL DEFAULT now()  
+- edited_at TIMESTAMPTZ NOT NULL DEFAULT now()
 
 ---
 
 ### 1.5. generation_error_logs
 Kolumny:
-- id UUID PRIMARY KEY  
-- journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
+- id BIGSERIAL PRIMARY KEY  
+- journey_id BIGSERIAL NOT NULL REFERENCES journeys(id)
+- user_id: UUID NOT NULL REFERENCES users(id)
 - model VARCHAR NOT NULL  
 - source_text_hash TEXT NOT NULL  
 - source_text_length INTEGER NOT NULL  
 - error_code VARCHAR(100) NOT NULL  
 - error_message TEXT NOT NULL  
-- error_timestamp TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL
+- error_timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
 
 ---
 
@@ -95,6 +98,5 @@ Na tabelach wykorzystujących kolumnę user_id (np. journeys) należy wdrożyć 
 Podobne polityki RLS należy wdrożyć dla tabel, które posiadają kolumnę user_id (np. profiles).
 
 ## 5. Dodatkowe uwagi
-- Używamy UUID jako typ kluczy głównych, co jest zgodne z typem używanym przez Supabase Auth.
 - Domyślne wartości dla kolumn created_at, edited_at oraz error_timestamp są ustawione na bieżący czas.
 - Indeks GIN dla kolumny generation_ids w journeys wspiera wyszukiwanie elementów w tablicy.
