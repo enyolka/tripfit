@@ -22,49 +22,47 @@ Kolumny:
 
 ### 1.3. journeys
 Kolumny:
-- id BIGSERIAL PRIMARY KEY  
+- id UUID PRIMARY KEY  
 - destination VARCHAR NOT NULL  
 - departure_date DATE NOT NULL  
 - return_date DATE NOT NULL  
-- activities VARCHAR,  
-- additional_notes TEXT NOT NULL  
+- activities VARCHAR  
+- additional_notes TEXT[] NOT NULL -- lista obiektów tekstowych  
 - user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE  
-- generation_ids BIGSERIAL[] DEFAULT '{}' -- lista identyfikatorów generacji
-- created_at: TIMESTAMPTZ NOT NULL DEFAULT now()
-- updated_at: TIMESTAMPTZ NOT NULL DEFAULT now() 
-Ograniczenia:
+
+Ograniczenia:  
 - CHECK (departure_date <= return_date)
 
 ---
 
 ### 1.4. generations
 Kolumny:
-- id BIGSERIAL PRIMARY KEY  
-- journey_id BIGSERIAL NOT NULL REFERENCES journeys(id)
+- id UUID PRIMARY KEY  
+- journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
 - model VARCHAR NOT NULL  
-- generated_count INTEGER NOT NULL DEFAULT 0  
-- accepted_unedited_count INTEGER NOT NULL DEFAULT 0  
-- accepted_edited_count INTEGER NOT NULL DEFAULT 0  
+- generated_text TEXT NOT NULL  
+- edited_text TEXT -- optional edited version
+- status VARCHAR(20) NOT NULL CHECK (status IN ('generated', 'accepted_unedited', 'accepted_edited', 'rejected')) DEFAULT 'generated'
 - source_text_hash TEXT NOT NULL  
 - source_text_length INTEGER NOT NULL  
-- created_at TIMESTAMPTZ NOT NULL DEFAULT now()  
-- edited_at TIMESTAMPTZ NOT NULL DEFAULT now()
+- created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL  
+- edited_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL
 
 ---
 
 ### 1.5. generation_error_logs
 Kolumny:
-- id BIGSERIAL PRIMARY KEY  
-- journey_id BIGSERIAL NOT NULL REFERENCES journeys(id)
-- user_id: UUID NOT NULL REFERENCES users(id)
+- id UUID PRIMARY KEY  
+- journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
 - model VARCHAR NOT NULL  
 - source_text_hash TEXT NOT NULL  
 - source_text_length INTEGER NOT NULL  
 - error_code VARCHAR(100) NOT NULL  
 - error_message TEXT NOT NULL  
-- error_timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
+- error_timestamp TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL
 
 ---
+
 
 ## 2. Relacje między tabelami
 
@@ -88,8 +86,7 @@ Kolumny:
 - `CREATE INDEX idx_journeys_user_id ON journeys(user_id);`
 - `CREATE INDEX idx_generations_journey_id ON generations(journey_id);`
 - `CREATE INDEX idx_generation_error_logs_journey_id ON generation_error_logs(journey_id);`
-- `CREATE INDEX idx_journeys_generation_ids ON journeys USING GIN (generation_ids);`
-
+- 
 ---
 
 ## 4. Zasady PostgreSQL (RLS)
@@ -98,5 +95,7 @@ Na tabelach wykorzystujących kolumnę user_id (np. journeys) należy wdrożyć 
 Podobne polityki RLS należy wdrożyć dla tabel, które posiadają kolumnę user_id (np. profiles).
 
 ## 5. Dodatkowe uwagi
+- Używamy UUID jako typ kluczy głównych, co jest zgodne z typem używanym przez Supabase Auth.
+- Preferencje w tabeli profiles są przechowywane jako JSONB dla elastyczności.
 - Domyślne wartości dla kolumn created_at, edited_at oraz error_timestamp są ustawione na bieżący czas.
 - Indeks GIN dla kolumny generation_ids w journeys wspiera wyszukiwanie elementów w tablicy.
