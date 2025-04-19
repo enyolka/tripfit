@@ -1,6 +1,3 @@
-// src/types.ts
-
-// Zakładamy, że typy z bazy danych są dostępne, np. poprzez import z 'database.types.ts'
 import type { Database } from "./db/database.types";
 
 // ------------------------------------------------------------------------------------------------
