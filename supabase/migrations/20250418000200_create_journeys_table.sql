@@ -5,7 +5,7 @@
 
 -- Create journeys table
 create table if not exists public.journeys (
-    id uuid primary key default gen_random_uuid(),
+    id bigserial primary key,
     destination varchar not null,
     departure_date date not null,
     return_date date not null,

@@ -5,8 +5,8 @@
 
 -- Create generation_error_logs table
 create table if not exists public.generation_error_logs (
-    id uuid primary key default gen_random_uuid(),
-    journey_id uuid not null references public.journeys(id) on delete cascade,
+    id bigserial primary key,
+    journey_id bigserial not null references public.journeys(id) on delete cascade,
     model varchar not null,
     source_text_hash text not null,
     source_text_length integer not null,

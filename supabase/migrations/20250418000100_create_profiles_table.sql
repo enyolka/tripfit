@@ -37,7 +37,6 @@ create index if not exists idx_profiles_user_id on public.profiles(user_id);
 -- Add comments
 comment on table public.profiles is 'User profiles containing preferences and fitness level';
 comment on column public.profiles.user_id is 'References auth.users.id';
-comment on column public.profiles.preferences is 'User preferences stored as JSONB for flexibility';
 comment on column public.profiles.level is 'User fitness level (1-5)';
 comment on column public.profiles.created_at is 'When the profile was created';
 comment on column public.profiles.updated_at is 'When the profile was last updated';

@@ -22,7 +22,7 @@ Kolumny:
 
 ### 1.3. journeys
 Kolumny:
-- id UUID PRIMARY KEY  
+- id BIGSERIAL PRIMARY KEY  
 - destination VARCHAR NOT NULL  
 - departure_date DATE NOT NULL  
 - return_date DATE NOT NULL  
@@ -37,8 +37,8 @@ Ograniczenia:
 
 ### 1.4. generations
 Kolumny:
-- id UUID PRIMARY KEY  
-- journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
+- id BIGSERIAL PRIMARY KEY  
+- journey_id BIGSERIAL NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
 - model VARCHAR NOT NULL  
 - generated_text TEXT NOT NULL  
 - edited_text TEXT -- optional edited version
@@ -52,8 +52,8 @@ Kolumny:
 
 ### 1.5. generation_error_logs
 Kolumny:
-- id UUID PRIMARY KEY  
-- journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
+- id BIGSERIAL PRIMARY KEY  
+- journey_id BIGSERIAL NOT NULL REFERENCES journeys(id) ON DELETE CASCADE  
 - model VARCHAR NOT NULL  
 - source_text_hash TEXT NOT NULL  
 - source_text_length INTEGER NOT NULL  
@@ -96,6 +96,4 @@ Podobne polityki RLS należy wdrożyć dla tabel, które posiadają kolumnę use
 
 ## 5. Dodatkowe uwagi
 - Używamy UUID jako typ kluczy głównych, co jest zgodne z typem używanym przez Supabase Auth.
-- Preferencje w tabeli profiles są przechowywane jako JSONB dla elastyczności.
 - Domyślne wartości dla kolumn created_at, edited_at oraz error_timestamp są ustawione na bieżący czas.
-- Indeks GIN dla kolumny generation_ids w journeys wspiera wyszukiwanie elementów w tablicy.

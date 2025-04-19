@@ -112,9 +112,12 @@
   Success: 200 OK with error log info.
 
 ## 3. Authentication and Authorization
-- Use JWT tokens returned at login.
-- Pass token in the Authorization header ("Bearer token") for all protected endpoints.
-- Enforce access control via middleware and Supabase RLS policies.
+- Mechanism: Token-based authentication using Supabase Auth.
+- Process:
+  - Users authenticate via /auth/login or /auth/register, receiving a bearer token.
+  - Protected endpoints require the token in the Authorization header.
+  - Database-level Row-Level Security (RLS) ensures that users access only records with matching user_id.
+- Additional Considerations: Use HTTPS, rate limiting, and secure error messaging to mitigate security risks.
 - Users can only access resources associated with their own user ID.
 
 ## 4. Validation and Business Logic

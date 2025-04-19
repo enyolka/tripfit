@@ -5,8 +5,8 @@
 
 -- Create generations table
 create table if not exists public.generations (
-    id uuid primary key default gen_random_uuid(),
-    journey_id uuid not null references public.journeys(id) on delete cascade,
+    id bigserial primary key,
+    journey_id bigserial not null references public.journeys(id) on delete cascade,
     model varchar not null,
     generated_text text not null,
     edited_text text,
