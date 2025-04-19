@@ -27,7 +27,7 @@ Kolumny:
 - departure_date DATE NOT NULL  
 - return_date DATE NOT NULL  
 - activities VARCHAR  
-- additional_notes TEXT[] NOT NULL -- lista obiektów tekstowych  
+- additional_notes TEXT[] NOT NULL  
 - user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE  
 
 Ograniczenia:  
