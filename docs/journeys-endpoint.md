@@ -30,29 +30,21 @@ Endpoint służy do tworzenia nowej podróży na podstawie danych przesłanych w
   - 500 Internal Server Error – błąd serwera
 
 ## 5. Przepływ danych
-1. **Autoryzacja i weryfikacja tokena przez middleware**  
-1. **Autoryzacja i weryfikacja tokena przez middleware (np. Supabase Auth)**  
-    Po otrzymaniu żądania, middleware przeprowadza weryfikację tokena autoryzacyjnego dostarczonego w nagłówkach żądania. Token jest sprawdzany pod kątem poprawności, ważności oraz zgodności z wymaganiami aplikacji. W przypadku niepowodzenia, żądanie zostaje odrzucone z odpowiednim kodem błędu (np. 401 Unauthorized).
+1. **Autoryzacja i weryfikacja tokena przez middleware (tymczasowo domyślny klient Supabase Auth)**  
+  Po otrzymaniu żądania, middleware przeprowadza weryfikację tokena autoryzacyjnego dostarczonego w nagłówkach żądania. Token jest sprawdzany pod kątem poprawności, ważności oraz zgodności z wymaganiami aplikacji. W przypadku niepowodzenia, żądanie zostaje odrzucone z odpowiednim kodem błędu (np. 401 Unauthorized). W obecnej implementacji używany jest domyślny klient Supabase Auth, który zostanie zastąpiony w kolejnych krokach.
 
 2. **Walidacja ciała żądania przy użyciu Zod (sprawdzanie wymaganych pól oraz reguły biznesowej: departure_date <= return_date)**  
-    Dane przesłane w ciele żądania są walidowane za pomocą biblioteki Zod. Proces ten obejmuje sprawdzenie obecności wymaganych pól (np. destination, departure_date, return_date) oraz ich zgodności z oczekiwanymi typami danych. Dodatkowo, walidowane są reguły biznesowe, takie jak upewnienie się, że data wyjazdu (departure_date) nie jest późniejsza niż data powrotu (return_date). W przypadku błędów walidacyjnych zwracany jest kod 400 Bad Request z informacją o problemie.
+  Dane przesłane w ciele żądania są walidowane za pomocą biblioteki Zod. Proces ten obejmuje sprawdzenie obecności wymaganych pól (np. destination, departure_date, return_date) oraz ich zgodności z oczekiwanymi typami danych. Dodatkowo, walidowane są reguły biznesowe, takie jak upewnienie się, że data wyjazdu (departure_date) nie jest późniejsza niż data powrotu (return_date). W przypadku błędów walidacyjnych zwracany jest kod 400 Bad Request z informacją o problemie.
 
 3. **Wstrzyknięcie user_id z danych autoryzacyjnych**  
-    - Pobranie `user_id` z tokena autoryzacyjnego.  
-    - Dodanie `user_id` do obiektu `CreateJourneyCommand`.  
-4. **Wstawienie nowego rekordu**  
-    - Dane wejściowe są używane do utworzenia nowego rekordu w tabeli `journeys`.  
-    - Operacja zapisu odbywa się za pomocą Supabase Client.  
-5. **Zwrócenie odpowiedzi**  
-    - Endpoint zwraca obiekt nowo utworzonej podróży w odpowiedzi HTTP 201 Created.  
-    - W przypadku błędów zwracane są odpowiednie kody HTTP (np. 400, 401, 500).  
-    Po pomyślnej weryfikacji tokena, identyfikator użytkownika (user_id) jest wyodrębniany z danych autoryzacyjnych i wstrzykiwany do obiektu CreateJourneyCommand. Dzięki temu możliwe jest powiązanie nowo tworzonej podróży z odpowiednim użytkownikiem w bazie danych.
+  - Pobranie `user_id` z tokena autoryzacyjnego.  
+  - Dodanie `user_id` do obiektu `CreateJourneyCommand`.  
 
 4. **Wstawienie nowego rekordu do tabeli journeys używając danych wejściowych**  
-    Na podstawie zwalidowanych danych wejściowych oraz user_id, tworzony jest nowy rekord w tabeli journeys w bazie danych. Operacja ta jest wykonywana z użyciem Supabase, co zapewnia bezpieczne i wydajne zarządzanie danymi. W przypadku wystąpienia błędu podczas zapisu, odpowiedni kod błędu (np. 500 Internal Server Error) zostaje zwrócony.
+  Na podstawie zwalidowanych danych wejściowych oraz user_id, tworzony jest nowy rekord w tabeli journeys w bazie danych. Operacja ta jest wykonywana z użyciem domyślnego klienta Supabase, co zapewnia bezpieczne i wydajne zarządzanie danymi. W przypadku wystąpienia błędu podczas zapisu, odpowiedni kod błędu (np. 500 Internal Server Error) zostaje zwrócony.
 
 5. **Zwrócenie nowo utworzonego rekordu jako odpowiedź**  
-    Po pomyślnym zapisaniu danych w bazie, nowo utworzony rekord podróży jest zwracany w odpowiedzi do klienta. Odpowiedź zawiera kod statusu 201 Created oraz dane podróży w formacie JSON, co umożliwia klientowi dalsze wykorzystanie tych informacji.
+  Po pomyślnym zapisaniu danych w bazie, nowo utworzony rekord podróży jest zwracany w odpowiedzi do klienta. Odpowiedź zawiera kod statusu 201 Created oraz dane podróży w formacie JSON, co umożliwia klientowi dalsze wykorzystanie tych informacji.
 
 ## 6. Względy bezpieczeństwa
 - Uwierzytelnianie tokenem oraz autoryzacja z użyciem RLS w bazie danych.
