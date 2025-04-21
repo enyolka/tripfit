@@ -17,6 +17,7 @@ Celem endpointu jest generowanie nowego planu podróży za pomocą zewnętrznej 
     "plan_preferences": { ... } // opcjonalne dodatkowe preferencje
   }
   ```
+   Jeśli wartość `plan_preferences` nie zostanie przekazana, system powinien użyć domyślnych ustawień generowania planu.
 
 ## 3. Wykorzystywane typy
 - **DTO:** GenerationDTO (określony w types.ts)
@@ -45,9 +46,17 @@ Celem endpointu jest generowanie nowego planu podróży za pomocą zewnętrznej 
    - Przekazanie pobranych danych wraz z opcjonalnymi preferencjami do zewnętrznego serwisu AI.
    - Otrzymanie wyniku – tekst generowanego planu.
 5. **Zapis do bazy:**
-   - Utworzenie rekordu w tabeli `generations` z danymi generacji (w tym generated_text, ustawienie statusu na "generated" oraz pozostałe wymagane pola).
-6. **Odpowiedź:**
-   - Zwrócenie odpowiedzi 201 Created z zapisanym rekordem generacji.
+   -  Wstaw nowy rekord do tabeli `generations` z kolumnami:
+     - `journey_id` – przekazany `id`
+     - `generated_text` – wynik odebrany z zewnętrznej usługi AI
+     - `status` – ustawiony jako `generated`
+     - Inne wymagane pola jak `source_text_hash`, `source_text_length` (wynikające z statusu wejścia, np. hash generowanego tekstu)
+6. **Logowanie błędów:**  
+   -  W sytuacji niepowodzenia (np. zewnętrzna usługa AI zwraca błąd) – utwórz wpis w tabeli `generation_error_logs` z informacjami o błędzie.
+7. **Odpowiedź:**
+   - W przypadku sukcesu – zwróć kod 201 Created wraz z danymi nowo utworzonej generacji.
+   - W przypadku błędów walidacji – odpowiedź 400.
+   - W przypadku błędu serwera – odpowiedź 500.
 
 ## 6. Względy bezpieczeństwa
 - **Autentykacja:** Użycie tokenu (np. Supabase Auth) w nagłówku Authorization.
@@ -88,11 +97,5 @@ Celem endpointu jest generowanie nowego planu podróży za pomocą zewnętrznej 
 6. **Zapis do bazy danych:**
    - Wykonać zapytanie insert do tabeli `generations` z wykorzystaniem odpowiednich typów i wartości domyślnych.
 7. **Obsługa błędów:**
-   - Implementacja bloków try-catch z logowaniem błędów w tabeli `generation_error_logs`.
+   - Implementacja bloków try-catch - dodanie wpisu do tabeli `generation_error_logs`.
    - Zwracanie odpowiednich kodów statusu HTTP przy błędach.
-8. **Testowanie:**
-   - Utworzyć testy jednostkowe dla walidacji, logiki serwisu oraz komunikacji z AI.
-   - Przetestować scenariusze pozytywne i błędne (np. niewłaściwy journeyID, błąd AI).
-9. **Dokumentacja:**
-   - Uaktualnić dokumentację API oraz plan wdrożenia.
-   - Dodać komentarze i logi ułatwiające debugging i dalszy rozwój.
