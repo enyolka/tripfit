@@ -1,69 +1,89 @@
-
-# API Endpoint Implementation Plan: GET /api/journeys/{id}
+# API Endpoint Implementation Plan: GET /api/journeys
 
 ## 1. Przegląd punktu końcowego
-Endpoint służy do pobrania szczegółowych informacji o konkretnej podróży. Na podstawie przekazanego identyfikatora journey z URL, endpoint zwraca dane z tabeli journeys, zapewniając że użytkownik ma dostęp do zasobu.
+Endpoint umożliwia pobranie listy podróży (journeys) przypisanych do aktualnie zalogowanego użytkownika. Ma na celu prezentację danych w sposób bezpieczny i zgodny z polityką RLS w bazie danych.
 
 ## 2. Szczegóły żądania
-- Metoda HTTP: GET
-- Struktura URL: /api/journeys/{id}
-- Parametry:
-  - *Wymagane:*  
-    - `id` – identyfikator podróży (pobrany z URL)
-- Request Body: Brak
+- **Metoda HTTP:** GET  
+- **Struktura URL:** /api/journeys  
+- **Parametry:**  
+  - Brak dodatkowych parametrów wymaganych w specyfikacji.  
+- **Request Body:** Brak
 
 ## 3. Wykorzystywane typy
-- DTO: JourneyDTO (zdefiniowany w src/types.ts)
+- **JourneyDTO:** Definiowany w pliku types.ts. Służy do reprezentacji danych wyciągniętych z tabeli journeys (transformacja pola additional_notes na string[]).
+- **CreateJourneyCommand / UpdateJourneyCommand:** Nie są używane dla operacji GET, lecz są dostępne przy innych operacjach na zasobie.
 
 ## 4. Szczegóły odpowiedzi
-- Sukces:
-  - Kod: 200 OK – zwraca obiekt JourneyDTO z danymi podróży
-- Błędy:
-  - 401 Unauthorized – w przypadku braku lub nieprawidłowego tokena autoryzacyjnego
-  - 404 Not Found – jeśli podróż o podanym id nie istnieje lub nie należy do zalogowanego użytkownika
-  - 500 Internal Server Error – w przypadku błędów serwera
+- **Status 200 OK:**  
+  Zwrócona zostanie lista obiektów typu JourneyDTO.
+- **Przykładowa struktura odpowiedzi:**
+  ```json
+  {
+    "journeys": [
+      {
+        "id": 123,
+        "destination": "Berlin",
+        "departure_date": "2023-07-01",
+        "return_date": "2023-07-10",
+        "activities": "sightseeing",
+        "additional_notes": ["note 1", "note 2"],
+        "user_id": "uuid-1234"
+      }
+    ]
+  }
+  ```
+- **Inne możliwe statusy:**  
+  - 401 — Użytkownik nie jest zalogowany (nieautoryzowany dostęp).  
+  - 500 — Błąd po stronie serwera.
 
 ## 5. Przepływ danych
-1. **Autoryzacja i weryfikacja tokena**
-   - Middleware weryfikuje token autoryzacyjny (np. Supabase Auth) i ustala user_id.
-2. **Walidacja parametru id**
-   - Parametr id jest walidowany (np. przy użyciu Zod) by upewnić się, że ma poprawny format.
-3. **Pobranie danych z bazy**
-   - Zapytanie do tabeli journeys z filtrem po id oraz user_id, korzystając z RLS dla zapewnienia bezpieczeństwa.
-4. **Zwrot odpowiedzi**
-   - W przypadku znalezienia właściwego rekordu, zwracany jest obiekt JourneyDTO z kodem 200 OK.
+1. Klient wysyła żądanie GET na /api/journeys.
+2. Middleware autoryzacyjne w Astro weryfikuje, czy użytkownik jest zalogowany (przy użyciu Supabase authentication).
+3. Handler endpointu wykorzystuje SupabaseClient z context.locals do pobrania listy journeys, filtrując dane po user_id.
+4. Warstwa serwisowa (np. moduł w `src/lib/services/journeyService.ts`) wykonuje zapytanie do bazy, korzystając z indeksu na kolumnie user_id.
+5. Pobierane rekordy są mapowane na JourneyDTO (transformacja additional_notes).
+6. Odpowiedź (lista obiektów JourneyDTO) jest zwracana klientowi z kodem 200.
 
 ## 6. Względy bezpieczeństwa
-- Weryfikacja tokena autoryzacyjnego (Supabase Auth) zapewnia, że tylko uwierzytelnieni użytkownicy mają dostęp.
-- RLS (Row-Level Security) w bazie danych gwarantuje, że użytkownik odczyta tylko swoje własne rekordy.
-- Walidacja id minimalizuje ryzyko nieprawidłowych lub złośliwych zapytań.
-- Zapewnienie bezpiecznej komunikacji przez HTTPS.
+- Uwierzytelnianie: Endpoint dostępny tylko dla użytkowników zalogowanych, korzystając z mechanizmu Supabase Auth.
+- Autoryzacja: Wykorzystanie RLS w tabeli journeys w celu ograniczenia dostępu tylko do danych danego użytkownika.
+- Walidacja: Choć brak jest danych wejściowych, zabezpieczenie przed nieoczekiwanymi danymi z middleware.
+- Użycie zaufanego SupabaseClient (importowany z `src/db/supabase.client.ts`) oraz stosowanie najlepszych praktyk w zarządzaniu środowiskiem.
 
 ## 7. Obsługa błędów
-- 401 Unauthorized – zwracane, gdy token autoryzacyjny jest nieprawidłowy lub nie został dostarczony.
-- 404 Not Found – zwracane, gdy nie znaleziono rekordu o danym id lub zasób nie należy do użytkownika.
-- 500 Internal Server Error – obsługuje nieoczekiwane błędy serwera, logując je dla dalszej analizy.
+- **Nieautoryzowany dostęp:**  
+  - Status: 401  
+  - Komunikat: "Użytkownik nie jest zalogowany."
+- **Błąd serwera:**  
+  - Status: 500  
+  - Komunikat: "Wystąpił problem po stronie serwera. Spróbuj ponownie później."
+- Dodatkowe logowanie błędów: Implementacja loggera w przypadku wystąpienia nieoczekiwanych błędów.
 
 ## 8. Rozważania dotyczące wydajności
-- Użycie indeksów (np. idx_journeys_user_id) przy filtrowaniu rekordów.
-- Optymalizacja zapytania do bazy by zminimalizować czas odpowiedzi.
-- Możliwość implementacji cache'owania wyników dla często odpytywanych podróży.
+- Wykorzystanie istniejących indeksów w tabeli journeys (szczególnie indeks na kolumnie user_id) dla szybkiego wyszukiwania.
+- Przemyślenie cache’owania wyników w przypadku wysokiego obciążenia.
+- Minimalizacja narzutu dzięki bezpośredniej integracji z Supabase.
 
 ## 9. Etapy wdrożenia
-1. Utworzenie pliku endpointu:  
-   - Lokalizacja: ./src/pages/api/journeys/[id].ts  
-   - Ustawienie: export const prerender = false
-2. Implementacja middleware autoryzacji:
-   - Validacja tokena i ustalenie user_id.
-3. Walidacja parametru URL:
-   - Zastosowanie walidacji (np. Zod) dla id.
-4. Pobranie rekordu z bazy danych:
-   - Zapytanie do bazy z użyciem Supabase Client, filtrujące rekord wg id oraz user_id.
-5. Zwrot rekordu:
-   - Wysłanie odpowiedzi 200 OK z obiektem JourneyDTO.
-6. Obsługa błędów:
-   - Implementacja mechanizmów try-catch i zwracanie odpowiednich kodów HTTP (401, 404, 500).
-7. Testowanie endpointu:
-   - Scenariusze pozytywne (poprawny id) i negatywne (nieprawidłowy token, brak rekordu).
-8. Aktualizacja dokumentacji:
-   - Przekazanie planu wdrożenia do zespołu.
+1. **Middleware autoryzacyjne:**  
+   - Upewnić się, że middleware w `./src/middleware/index.ts` prawidłowo weryfikuje uwierzytelnienie użytkownika.
+2. **Implementacja warstwy serwisowej:**  
+   - Utworzyć lub rozszerzyć moduł w `./src/lib/services/journeyService.ts`, który będzie zawierał funkcję pobierającą journeys dla danego user_id.
+3. **Endpoint API:**  
+   - Utworzyć plik `./src/pages/api/journeys.ts`.
+   - Zaimportować SupabaseClient z `src/db/supabase.client.ts` oraz odpowiedni serwis.
+   - Zaimplementować handler GET, który:  
+     a) Weryfikuje autoryzację,  
+     b) Wywołuje funkcję serwisową,  
+     c) Mapuje dane do JourneyDTO,  
+     d) Zwraca odpowiedź 200.
+4. **Walidacja i logowanie:**  
+   - Zaimplementować prostą walidację oraz logowanie błędów.
+5. **Testy:**  
+   - Napisać testy integracyjne i jednostkowe, sprawdzające:  
+     a) Poprawność pobierania danych,  
+     b) Reakcję na nieautoryzowane żądania,  
+     c) Obsługę błędów.
+6. **Code review i optymalizacja:**  
+   - Przeprowadzić przegląd kodu przez zespół oraz dokonać niezbędnych optymalizacji przed wdrożeniem do produkcji.
