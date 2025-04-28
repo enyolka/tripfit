@@ -59,10 +59,11 @@ Kryteria akceptacji:
 - Zmiany są zapisywane w bazie danych.
 
 US-004  
-Tytuł: Tworzenie nowej podróży
+Tytuł: Dostęp do listy podróży i tworzenie nowej podróży
 Opis: Jako użytkownik chcę móc stworzyć nowy plan podróży poprzez dodanie nowej zakładki na liście podróży.  
 Kryteria akceptacji:  
-- Użytkownik tworzy nową zakładkę na liście podróży i wprowadza jej nazwę.  
+- Użytkownik ma dedykowaną przestrzeń do przeglądania listy z podróżami.
+- Użytkownik tworzy nowy obiekt na liście podróży poprzez otwarcie modalu do tworzenia podróży i wprowadzenia podstawowych informacji. 
 - Stworzona zostaje nowa przestrzeń dla podróży, gdzie mogą zostać dodane nowe notatki. 
 - Dana podróż może być usuwana, a wszystkie dane z nią związane zostaną usunięte z bazy danych.
 
