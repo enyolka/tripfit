@@ -104,4 +104,43 @@ export class JourneyService {
       );
     }
   }
+
+  async getJourneys(): Promise<JourneyDTO[]> {
+    try {
+      const { data, error } = await this.supabase
+        .from('journeys')
+        .select('*')
+        .eq('user_id', DEFAULT_USER_ID)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw new JourneyServiceError(
+          'Failed to fetch journeys',
+          'DATABASE_ERROR',
+          error
+        );
+      }
+
+      if (!data) {
+        return [];
+      }
+
+      return data.map(journey => ({
+        ...journey,
+        additional_notes: Array.isArray(journey.additional_notes)
+          ? journey.additional_notes
+          : []
+      }));
+    } catch (error) {
+      if (error instanceof JourneyServiceError) {
+        throw error;
+      }
+
+      throw new JourneyServiceError(
+        'An unexpected error occurred while fetching journeys',
+        'UNEXPECTED_ERROR',
+        error
+      );
+    }
+  }
 }

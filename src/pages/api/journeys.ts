@@ -28,6 +28,29 @@ const createJourneySchema = z.object({
   path: ["departure_date"]
 });
 
+export const GET: APIRoute = async ({ locals }) => {
+  try {
+    const journeyService = new JourneyService(locals.supabase);
+    const journeys = await journeyService.getJourneys();
+
+    return new Response(JSON.stringify({ journeys }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching journeys:', error);
+    return new Response(JSON.stringify({
+      error: "Internal Server Error",
+      message: error instanceof Error ? error.message : "Unknown error occurred"
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // 1. Get and validate the auth context
@@ -67,7 +90,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const createdJourney = await journeyService.createJourney(command);
 
-// 5. Return successful response with created journey
+    // 5. Return successful response with created journey
     return new Response(JSON.stringify(createdJourney), {
       status: 201,
       headers: { 'Content-Type': 'application/json' }
