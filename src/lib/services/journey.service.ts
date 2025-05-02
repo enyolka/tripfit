@@ -143,4 +143,48 @@ export class JourneyService {
       );
     }
   }
+
+  async deleteJourney(journeyId: number): Promise<void> {
+    try {
+      // First check if journey exists and belongs to user
+      const { data: journey, error: checkError } = await this.supabase
+        .from('journeys')
+        .select('id')
+        .eq('id', journeyId)
+        .eq('user_id', DEFAULT_USER_ID)
+        .single();
+
+      if (checkError || !journey) {
+        throw new JourneyServiceError(
+          'Journey not found or access denied',
+          'NOT_FOUND'
+        );
+      }
+
+      // Delete the journey (related records will be deleted via ON DELETE CASCADE)
+      const { error: deleteError } = await this.supabase
+        .from('journeys')
+        .delete()
+        .eq('id', journeyId)
+        .eq('user_id', DEFAULT_USER_ID);
+
+      if (deleteError) {
+        throw new JourneyServiceError(
+          'Failed to delete journey',
+          'DATABASE_ERROR',
+          deleteError
+        );
+      }
+    } catch (error) {
+      if (error instanceof JourneyServiceError) {
+        throw error;
+      }
+
+      throw new JourneyServiceError(
+        'An unexpected error occurred while deleting the journey',
+        'UNEXPECTED_ERROR',
+        error
+      );
+    }
+  }
 }
