@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CreateJourneyCommand, JourneyDTO } from '../../types';
+import type { CreateJourneyCommand, JourneyDTO, UpdateJourneyCommand } from '../../types';
 import type { Database } from '../../db/database.types';
 import { DEFAULT_USER_ID } from '../../db/supabase.client';
 
@@ -127,6 +127,49 @@ export class JourneyService {
     }
   }
 
+  async getJourney(journeyId: number): Promise<JourneyDTO> {
+    try {
+      const { data, error } = await this.supabase
+        .from('journeys')
+        .select('*')
+        .eq('id', journeyId)
+        .eq('user_id', DEFAULT_USER_ID)
+        .single();
+
+      if (error) {
+        throw new JourneyServiceError(
+          'Failed to fetch journey',
+          'DATABASE_ERROR',
+          error
+        );
+      }
+
+      if (!data) {
+        throw new JourneyServiceError(
+          'Journey not found or access denied',
+          'NOT_FOUND'
+        );
+      }
+
+      return {
+        ...data,
+        additional_notes: Array.isArray(data.additional_notes)
+          ? data.additional_notes
+          : []
+      };
+    } catch (error) {
+      if (error instanceof JourneyServiceError) {
+        throw error;
+      }
+
+      throw new JourneyServiceError(
+        'An unexpected error occurred while fetching the journey',
+        'UNEXPECTED_ERROR',
+        error
+      );
+    }
+  }
+
   async deleteJourney(journeyId: number): Promise<void> {
     try {
       // First check if journey exists and belongs to user
@@ -165,6 +208,89 @@ export class JourneyService {
 
       throw new JourneyServiceError(
         'An unexpected error occurred while deleting the journey',
+        'UNEXPECTED_ERROR',
+        error
+      );
+    }
+  }
+
+  async updateJourney(journeyId: number, command: UpdateJourneyCommand): Promise<JourneyDTO> {
+    try {
+      // First get the current journey data
+      const { data: currentJourney, error: getError } = await this.supabase
+        .from('journeys')
+        .select('*')
+        .eq('id', journeyId)
+        .eq('user_id', DEFAULT_USER_ID)
+        .single();
+
+      if (getError || !currentJourney) {
+        throw new JourneyServiceError(
+          'Journey not found or access denied',
+          'NOT_FOUND'
+        );
+      }
+
+      // Update only the fields that are provided in the command
+      const updateData = {
+        ...(command.destination !== undefined && { destination: command.destination }),
+        ...(command.departure_date !== undefined && { departure_date: command.departure_date }),
+        ...(command.return_date !== undefined && { return_date: command.return_date }),
+        ...(command.activities !== undefined && { activities: command.activities }),
+        ...(command.additional_notes !== undefined && { additional_notes: command.additional_notes })
+      };
+
+      const { data: updatedData, error: updateError } = await this.supabase
+        .from('journeys')
+        .update(updateData)
+        .eq('id', journeyId)
+        .eq('user_id', DEFAULT_USER_ID)
+        .select()
+        .single();
+
+      if (updateError) {
+        switch (updateError.code) {
+          case '23514': // check_violation
+            throw new JourneyServiceError(
+              'Journey data violates database constraints',
+              'CONSTRAINT_VIOLATION',
+              updateError
+            );
+          case '23503': // foreign_key_violation
+            throw new JourneyServiceError(
+              'Referenced user does not exist',
+              'INVALID_USER_REFERENCE',
+              updateError
+            );
+          default:
+            throw new JourneyServiceError(
+              'Failed to update journey',
+              'DATABASE_ERROR',
+              updateError
+            );
+        }
+      }
+
+      if (!updatedData) {
+        throw new JourneyServiceError(
+          'Journey not found or access denied',
+          'NOT_FOUND'
+        );
+      }
+
+      return {
+        ...updatedData,
+        additional_notes: Array.isArray(updatedData.additional_notes)
+          ? updatedData.additional_notes
+          : []
+      };
+    } catch (error) {
+      if (error instanceof JourneyServiceError) {
+        throw error;
+      }
+
+      throw new JourneyServiceError(
+        'An unexpected error occurred while updating the journey',
         'UNEXPECTED_ERROR',
         error
       );
