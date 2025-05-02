@@ -59,7 +59,7 @@
     Description: Retrieve details of a specific journey.  
     Success: 200 OK with journey data.
 
-- **PUT /api/journeys/{id}**  
+- **PATCH /api/journeys/{id}**  
     Description: Update an existing journey.  
     Request JSON: Same as POST.  
     Success: 200 OK with updated journey.
@@ -88,7 +88,7 @@
     Description: Get details of a specific generation including its generated_text, edited_text, and status.  
     Success: 200 OK with generation data.
 
-- **PUT /api/generations/{id}**  
+- **PATCH /api/generations/{id}**  
     Description: Edit an existing travel plan generation (e.g., update edited_text or change status).  
     Request JSON:
     {
