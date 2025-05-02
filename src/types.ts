@@ -54,10 +54,10 @@ export interface CreateGenerationCommand {
 	// Jeśli wymagane są dodatkowe pola, można je dodać "ręcznie"
 }
 
-// Interfejs dla aktualizacji generacji – częściowa aktualizacja
+// Interfejs dla aktualizacji generacji – edycja tekstu zawsze ustawia status na accepted_edited
 export interface UpdateGenerationCommand {
-	edited_text?: string;
-	status: "accepted_unedited" | "accepted_edited" | "rejected";
+	edited_text: string;
+	status: "accepted_edited";  // zawsze ta wartość przy edycji
 }
 
 // ------------------------------------------------------------------------------------------------
