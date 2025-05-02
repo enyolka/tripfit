@@ -1,18 +1,40 @@
-import { z } from "zod";
-import type { APIRoute } from "astro";
-import { DEFAULT_USER_ID, type SupabaseClient } from "../../../../db/supabase.client";
-import { AIService, type AIModelConfig, AIServiceError } from "../../../../lib/services/ai.service";
-import { RateLimitService, RateLimitError } from "../../../../lib/services/rate-limit.service";
+import { z } from 'zod';
+import type { APIRoute } from 'astro';
+import { DEFAULT_USER_ID, type SupabaseClient } from '../../../../db/supabase.client';
+import { AIService, type AIModelConfig, AIServiceError } from '../../../../lib/services/ai.service';
+import { RateLimitService, RateLimitError } from '../../../../lib/services/rate-limit.service';
+import { type GenerationDTO } from '../../../../types';
+import { GenerationService } from '../../../../lib/services/generation.service';
 
-// Prevent static generation of this endpoint
 export const prerender = false;
 
-// Validation schema for URL parameters
+// Shared validation schemas
 const paramsSchema = z.object({
-  id: z.string().min(1).transform(Number),
+  id: z.string().transform((val) => {
+    const parsed = parseInt(val, 10);
+    if (isNaN(parsed)) {
+      throw new Error('Invalid journey ID format');
+    }
+    return parsed;
+  }),
 });
 
-// Validation schema for request body with AI model configuration
+const generationResponseSchema = z.array(
+  z.object({
+    id: z.number(),
+    journey_id: z.number(),
+    model: z.string(),
+    generated_text: z.string(),
+    edited_text: z.string().nullable(),
+    status: z.enum(['generated', 'accepted_unedited', 'accepted_edited', 'rejected']),
+    source_text_hash: z.string(),
+    source_text_length: z.number(),
+    created_at: z.string(),
+    edited_at: z.string().nullable()
+  })
+);
+
+// POST specific schemas
 const bodySchema = z.object({
   plan_preferences: z.record(z.any()).optional(),
   model_config: z.object({
@@ -22,23 +44,64 @@ const bodySchema = z.object({
   }).optional(),
 });
 
+// GET endpoint handler
+export const GET: APIRoute = async ({ params, locals }) => {
+  try {
+    const { id } = paramsSchema.parse(params);
+    const { supabase } = locals;
+
+    const generationService = new GenerationService(supabase);
+    const generations = await generationService.getGenerationsForJourney(id);
+    const validatedGenerations = generationResponseSchema.parse(generations);
+
+    return new Response(JSON.stringify(validatedGenerations), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('Validation error:', error.errors);
+      return new Response(JSON.stringify({ 
+        error: 'Data validation failed',
+        details: error.errors
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (error instanceof Error && error.message === 'Journey not found') {
+      return new Response(JSON.stringify({ error: 'Journey not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.error('Error fetching generations:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// POST endpoint handler
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
-    // 1. Validate URL parameters
     const validatedParams = paramsSchema.safeParse(params);
     if (!validatedParams.success) {
-      return new Response(JSON.stringify({ error: "Invalid journey ID" }), {
+      return new Response(JSON.stringify({ error: 'Invalid journey ID' }), {
         status: 400,
       });
     }
     const { id: journeyId } = validatedParams.data;
 
-    // 2. Validate request body
     const body = await request.json();
     const validatedBody = bodySchema.safeParse(body);
     if (!validatedBody.success) {
       return new Response(JSON.stringify({ 
-        error: "Invalid request body",
+        error: 'Invalid request body',
         details: validatedBody.error.errors
       }), {
         status: 400,
@@ -46,42 +109,37 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
     const { plan_preferences, model_config } = validatedBody.data;
 
-    // 3. Get Supabase client from context
     const supabase = locals.supabase as SupabaseClient;
 
-    // 4. Check rate limit
     const rateLimitService = new RateLimitService(supabase);
     try {
       await rateLimitService.checkRateLimit(journeyId);
     } catch (error) {
       if (error instanceof RateLimitError) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded", message: error.message }),
+          JSON.stringify({ error: 'Rate limit exceeded', message: error.message }),
           { status: 429 }
         );
       }
       throw error;
     }
 
-    // 5. Fetch full journey details
     const { data: journey, error: journeyError } = await supabase
-      .from("journeys")
-      .select("*")
-      .eq("id", journeyId)
-      .eq("user_id", DEFAULT_USER_ID)
+      .from('journeys')
+      .select('*')
+      .eq('id', journeyId)
+      .eq('user_id', DEFAULT_USER_ID)
       .single();
 
     if (journeyError || !journey) {
       return new Response(
-        JSON.stringify({ error: "Journey not found or access denied" }),
+        JSON.stringify({ error: 'Journey not found or access denied' }),
         { status: 404 }
       );
     }
 
-    // 6. Initialize AI service with configuration
     const aiService = new AIService(model_config);
 
-    // 7. Generate AI response
     try {
       const {
         generatedText,
@@ -90,14 +148,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         sourceTextLength,
       } = await aiService.generateTravelPlan(journey, plan_preferences);
 
-      // 8. Save generation to database
       const { data: generation, error: generationError } = await supabase
-        .from("generations")
+        .from('generations')
         .insert({
           journey_id: journeyId,
           model,
           generated_text: generatedText,
-          status: "generated",
+          status: 'generated',
           source_text_hash: sourceTextHash,
           source_text_length: sourceTextLength,
         })
@@ -108,21 +165,19 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         throw generationError;
       }
 
-      // 9. Return successful response
       return new Response(JSON.stringify(generation), {
         status: 201,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
       });
 
     } catch (error) {
-      // 10. Log generation error
       const errorDetails = {
         journey_id: journeyId,
-        model: model_config?.model || "gpt-4",
-        source_text_hash: "unknown",
+        model: model_config?.model || 'gpt-4',
+        source_text_hash: 'unknown',
         source_text_length: 0,
-        error_code: "UNKNOWN_ERROR",
-        error_message: "Unknown error occurred"
+        error_code: 'UNKNOWN_ERROR',
+        error_message: 'Unknown error occurred'
       };
 
       if (error instanceof AIServiceError) {
@@ -138,19 +193,19 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         errorDetails.error_message = error.message;
       }
 
-      await supabase.from("generation_error_logs").insert(errorDetails);
+      await supabase.from('generation_error_logs').insert(errorDetails);
       throw error;
     }
   } catch (error) {
-    console.error("Error in generations endpoint:", error);
+    console.error('Error in generations endpoint:', error);
     return new Response(
       JSON.stringify({ 
-        error: "Internal server error",
-        message: error instanceof Error ? error.message : "Unknown error occurred"
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
       }),
       { 
         status: 500,
-        headers: { "Content-Type": "application/json" }
+        headers: { 'Content-Type': 'application/json' }
       }
     );
   }
