@@ -19,21 +19,14 @@ export class JourneyService {
 
   async createJourney(command: CreateJourneyCommand): Promise<JourneyDTO> {
     try {
-      // Convert dates from DD.MM.YYYY to YYYY-MM-DD for database
-      const [day, month, year] = command.departure_date.split('.');
-      const departure_date = `${year}-${month}-${day}`;
-      
-      const [returnDay, returnMonth, returnYear] = command.return_date.split('.');
-      const return_date = `${returnYear}-${returnMonth}-${returnDay}`;
-
       const { data, error } = await this.supabase
         .from('journeys')
         .insert({
           destination: command.destination,
-          departure_date,
-          return_date,
+          departure_date: command.departure_date,
+          return_date: command.return_date,
           activities: command.activities,
-          additional_notes: command.additional_notes,
+          additional_notes: command.additional_notes || [],
           user_id: DEFAULT_USER_ID
         })
         .select()
@@ -86,17 +79,7 @@ export class JourneyService {
       if (error instanceof JourneyServiceError) {
         throw error;
       }
-      
-      // Handle date parsing errors
-      if (error instanceof Error && error.message.includes('Invalid Date')) {
-        throw new JourneyServiceError(
-          'Invalid date format provided',
-          'INVALID_DATE_FORMAT',
-          error
-        );
-      }
 
-      // Re-throw unexpected errors with consistent format
       throw new JourneyServiceError(
         'An unexpected error occurred while creating the journey',
         'UNEXPECTED_ERROR',

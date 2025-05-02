@@ -7,20 +7,16 @@ import { DEFAULT_USER_ID } from '../../db/supabase.client';
 // Disable static pre-rendering for API routes
 export const prerender = false;
 
-// Validation schema for journey creation with European date format (DD.MM.YYYY)
+// Validation schema for journey creation with database date format (YYYY-MM-DD)
 const createJourneySchema = z.object({
   destination: z.string().min(1),
-  departure_date: z.string().regex(/^\d{2}\.\d{2}\.\d{4}$/, "Date must be in DD.MM.YYYY format"),
-  return_date: z.string().regex(/^\d{2}\.\d{2}\.\d{4}$/, "Date must be in DD.MM.YYYY format"),
+  departure_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  return_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   activities: z.string().optional(),
   additional_notes: z.array(z.string()).default([])
 }).refine((data) => {
-  // Convert DD.MM.YYYY to Date objects for comparison
-  const [depDay, depMonth, depYear] = data.departure_date.split('.');
-  const [retDay, retMonth, retYear] = data.return_date.split('.');
-  
-  const departure = new Date(+depYear, +depMonth - 1, +depDay);
-  const returnDate = new Date(+retYear, +retMonth - 1, +retDay);
+  const departure = new Date(data.departure_date);
+  const returnDate = new Date(data.return_date);
   
   return departure <= returnDate;
 }, {

@@ -65,6 +65,9 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
                             value={formData.departure_date || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, departure_date: e.target.value }))}
                             required
+                            min="2024-01-01" // Set reasonable min date
+                            pattern="\d{4}-\d{2}-\d{2}"
+                            aria-label="Departure date in YYYY-MM-DD format"
                         />
                     </div>
                     <div className="space-y-2">
@@ -77,6 +80,9 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
                             value={formData.return_date || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, return_date: e.target.value }))}
                             required
+                            min={formData.departure_date || '2024-01-01'} // Can't be before departure
+                            pattern="\d{4}-\d{2}-\d{2}"
+                            aria-label="Return date in YYYY-MM-DD format"
                         />
                     </div>
                     <div className="flex justify-end space-x-2 mt-4">
