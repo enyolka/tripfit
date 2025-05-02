@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import type { SupabaseClient } from '../../../db/supabase.client';
 import { type GenerationDTO, type UpdateGenerationCommand } from '../../../types';
 import { GenerationService } from '../../../lib/services/generation.service';
+import { GenerationError } from '../../../lib/services/generation.service';
 
 export const prerender = false;
 
@@ -86,5 +87,45 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+};
+
+export const GET: APIRoute = async ({ params, locals }) => {
+  try {
+    // Validate input parameters
+    const result = paramsSchema.safeParse(params);
+    if (!result.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid generation ID',
+          details: result.error.issues 
+        }),
+        { status: 400 }
+      );
+    }
+
+    const generationService = new GenerationService(locals.supabase);
+    const generation = await generationService.getGeneration(result.data.id);
+
+    return new Response(JSON.stringify(generation), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    if (error instanceof GenerationError) {
+      const status = error.code === 'GENERATION_NOT_FOUND' ? 404 : 500;
+      return new Response(
+        JSON.stringify({ error: error.message }), 
+        { status }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        error: 'An unexpected error occurred' 
+      }), 
+      { status: 500 }
+    );
   }
 };

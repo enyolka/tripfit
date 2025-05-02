@@ -74,6 +74,48 @@ export class GenerationService {
     }
   }
 
+  async getGeneration(id: number): Promise<GenerationDTO> {
+    try {
+      const { data: generation, error } = await this.supabase
+        .from('generations')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw new GenerationError(
+          'Failed to fetch generation',
+          'DATABASE_ERROR',
+          error
+        );
+      }
+
+      if (!generation) {
+        throw new GenerationError(
+          'Generation not found',
+          'GENERATION_NOT_FOUND'
+        );
+      }
+
+      // Map to DTO and normalize the data
+      return {
+        ...generation,
+        generated_text: generation.generated_text || '',
+        status: generation.status || 'generated'
+      } as GenerationDTO;
+    } catch (error) {
+      if (error instanceof GenerationError) {
+        throw error;
+      }
+
+      throw new GenerationError(
+        'An unexpected error occurred while fetching the generation',
+        'DATABASE_ERROR',
+        error
+      );
+    }
+  }
+
   async updateGeneration(generationId: number, command: UpdateGenerationCommand): Promise<GenerationDTO> {
     try {
       // First get the current generation to verify existence and access
