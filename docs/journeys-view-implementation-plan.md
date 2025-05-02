@@ -34,7 +34,7 @@ Widok powinien być dostępny pod ścieżką `/journeys` – widok dostępny wy�
 ### FilterControls
 - **Opis:** Umożliwia filtrowanie i sortowanie listy podróży.
 - **Główne elementy:**  
-  - Lista rozwijana lub przyciski do sortowania (np. według daty, statusu).
+  - Lista rozwijana lub przyciski do sortowania (np. według daty, statusu, nazwy).
   - Input do szybkiego wyszukiwania.
 - **Obsługiwane interakcje:**  
   - Zmiana opcji filtra/sortowania, przekazywana do rodzica.
@@ -123,7 +123,7 @@ Widok powinien być dostępny pod ścieżką `/journeys` – widok dostępny wy�
   - additional_notes: string[]
 
 - **FilterOptions:**  
-  - sortBy: 'date' | 'status'  
+  - sortBy: 'date' | 'status' | 'name' 
   - searchQuery: string
 
 ## 6. Zarządzanie stanem
@@ -170,8 +170,8 @@ Widok powinien być dostępny pod ścieżką `/journeys` – widok dostępny wy�
 ## 11. Kroki implementacji
 1. Utworzyć nowy widok `/journeys` w systemie routingu Astro, zabezpieczając dostęp widoku (tylko po zalogowaniu).
 2. Stworzyć główny komponent JourneysView, integrujący custom hook useJourneys i zarządzanie stanem modali.
-3. Zbudować komponent FilterControls z funkcjonalnością filtrowania i sortowania, przekazując zmiany do JourneysView.
-4. Utworzyć komponent JourneyList iterujący po liście podróży i renderujący komponenty JourneyItem.
+3. Utworzyć komponent JourneyList iterujący po liście podróży i renderujący komponenty JourneyItem.
+4. Zbudować komponent FilterControls z funkcjonalnością filtrowania i sortowania, przekazując zmiany do JourneysView.
 5. W komponencie JourneyItem dodać przycisk usunięcia, który wywołuje callback otwierający modal DeleteConfirmationModal oraz umożliwia przekierowanie do widoku szczegółów przy kliknięciu na element.
 6. Utworzyć komponent AddJourneyButton, który otwiera modal NewJourneyModal.
 7. Zbudować formularz w NewJourneyModal z walidacją pól (szczególnie dat) oraz integracją z API (POST /api/journeys). Po sukcesie wywołać callback przekierowujący do widoku szczegółów nowo utworzonej podróży.

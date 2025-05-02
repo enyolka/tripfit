@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import JourneysView from '../components/journeys/JourneysView';
+// import { supabase } from '../db/supabase.client';
+
+// TODO: [AUTH] Temporary bypass of authentication check
+// This should be replaced with proper authentication once implemented
+// Original code:
+// const { data: { session }} = await supabase.auth.getSession();
+// if (!session) {
+//     return Astro.redirect('/');
+// }
+---
+<Layout title="Your Journeys">
+    <main class="container mx-auto px-4 py-8">
+        <JourneysView client:load />
+    </main>
+</Layout>

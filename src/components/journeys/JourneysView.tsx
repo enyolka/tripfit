@@ -1,0 +1,132 @@
+import { useEffect, useState } from 'react';
+import { Button } from '../ui/button';
+import { useJourneys } from '../hooks/useJourneys';
+import { FilterControls } from './FilterControls';
+import { JourneyItem } from './JourneyItem';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { NewJourneyModal } from './NewJourneyModal';
+import type { CreateJourneyCommand } from '../../types';
+
+export default function JourneysView() {
+    const { journeys, isLoading, error, fetchJourneys, deleteJourney, filterJourneys, createJourney } = useJourneys();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedJourneyId, setSelectedJourneyId] = useState<number | null>(null);
+    const [newJourneyModalOpen, setNewJourneyModalOpen] = useState(false);
+
+    useEffect(() => {
+        fetchJourneys();
+    }, [fetchJourneys]);
+
+    const handleFilterChange = (searchQuery: string, sortBy: 'date' | 'status' | 'name') => {
+        filterJourneys(searchQuery, sortBy);
+    };
+
+    const handleDeleteClick = (journeyId: number) => {
+        setSelectedJourneyId(journeyId);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (selectedJourneyId === null) return;
+        
+        try {
+            await deleteJourney(selectedJourneyId);
+            setDeleteDialogOpen(false);
+            setSelectedJourneyId(null);
+        } catch (err) {
+            console.error('Failed to delete journey:', err);
+        }
+    };
+
+    const handleCreateJourney = async (journey: CreateJourneyCommand) => {
+        try {
+            await createJourney(journey);
+            await fetchJourneys(); // Refresh the list after creating
+        } catch (error) {
+            console.error('Failed to create journey:', error);
+            throw error; // Re-throw to let NewJourneyModal handle the error state
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[400px]">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-500 p-4">
+                <p>{error}</p>
+                <Button 
+                    variant="outline" 
+                    onClick={() => fetchJourneys()}
+                    className="mt-4"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">Your Journeys</h1>
+                <Button onClick={() => setNewJourneyModalOpen(true)}>New Journey</Button>
+            </div>
+
+            <FilterControls onFilterChange={handleFilterChange} />
+            
+            {journeys.length === 0 ? (
+                <div className="text-center py-8">
+                    <p className="text-lg text-muted-foreground">No journeys found</p>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setNewJourneyModalOpen(true)}
+                        className="mt-4"
+                    >
+                        Create your first journey
+                    </Button>
+                </div>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {journeys.map((journey) => (
+                        <JourneyItem
+                            key={journey.id}
+                            journey={journey}
+                            onDelete={handleDeleteClick}
+                        />
+                    ))}
+                </div>
+            )}
+
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Journey</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this journey? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end space-x-2 mt-4">
+                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteConfirm}>
+                            Delete
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <NewJourneyModal 
+                isOpen={newJourneyModalOpen}
+                onClose={() => setNewJourneyModalOpen(false)}
+                onSubmit={handleCreateJourney}
+            />
+        </div>
+    );
+}
