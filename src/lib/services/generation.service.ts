@@ -181,4 +181,46 @@ export class GenerationService {
       );
     }
   }
+
+  async deleteGeneration(generationId: number): Promise<void> {
+    try {
+      // First verify the generation exists and user has access
+      const { data: currentGeneration, error: getError } = await this.supabase
+        .from('generations')
+        .select('id')
+        .eq('id', generationId)
+        .single();
+
+      if (getError || !currentGeneration) {
+        throw new GenerationError(
+          'Generation not found or access denied',
+          'GENERATION_NOT_FOUND'
+        );
+      }
+
+      // Delete the generation
+      const { error: deleteError } = await this.supabase
+        .from('generations')
+        .delete()
+        .eq('id', generationId);
+
+      if (deleteError) {
+        throw new GenerationError(
+          'Failed to delete generation',
+          'DATABASE_ERROR',
+          deleteError
+        );
+      }
+    } catch (error) {
+      if (error instanceof GenerationError) {
+        throw error;
+      }
+
+      throw new GenerationError(
+        'An unexpected error occurred while deleting the generation',
+        'DATABASE_ERROR',
+        error
+      );
+    }
+  }
 }

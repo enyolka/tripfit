@@ -129,3 +129,53 @@ export const GET: APIRoute = async ({ params, locals }) => {
     );
   }
 };
+
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    // 1. Validate generation ID from URL params
+    const validatedParams = paramsSchema.safeParse(params);
+    if (!validatedParams.success) {
+      return new Response(JSON.stringify({
+        error: "Invalid generation ID format",
+        details: validatedParams.error.errors
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { id: generationId } = validatedParams.data;
+
+    // 2. Initialize service and delete generation
+    const generationService = new GenerationService(locals.supabase as SupabaseClient);
+    await generationService.deleteGeneration(generationId);
+
+    // 3. Return success response
+    return new Response(JSON.stringify({ 
+      message: "Generation successfully deleted" 
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Error deleting generation:', error);
+
+    if (error instanceof Error) {
+      if (error.message === 'Generation not found' || error.message === 'Generation not found or access denied') {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({
+      error: "Internal Server Error",
+      message: error instanceof Error ? error.message : "Unknown error occurred"
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
