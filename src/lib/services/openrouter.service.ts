@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { OpenRouterLogger } from './openrouter.logger';
 
 export class OpenRouterError extends Error {
   constructor(
@@ -47,11 +48,13 @@ export class OpenRouterService {
   private modelConfig: ModelConfig;
   private readonly maxRetries = 3;
   private readonly retryDelay = 1000; // 1 second
+  private readonly logger: OpenRouterLogger;
 
   constructor(config: Partial<ModelConfig> = {}) {
     this.apiKey = import.meta.env.OPENROUTER_API_KEY;
     this.apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
     this.modelConfig = { ...DEFAULT_MODEL_CONFIG, ...config };
+    this.logger = new OpenRouterLogger();
 
     if (!this.apiKey) {
       throw new OpenRouterError(
@@ -59,21 +62,6 @@ export class OpenRouterService {
         'UNEXPECTED_ERROR'
       );
     }
-  }
-
-  private logRequest(requestId: string, payload: any, startTime: number): void {
-    console.info(`[OpenRouter] Request ${requestId} started at ${new Date(startTime).toISOString()}`, {
-      model: this.modelConfig.model,
-      messageCount: payload.messages?.length
-    });
-  }
-
-  private logResponse(requestId: string, duration: number, success: boolean, error?: any): void {
-    console.info(`[OpenRouter] Request ${requestId} completed`, {
-      success,
-      durationMs: duration,
-      ...(error && { error: error.message || error })
-    });
   }
 
   private validateInput(payload: ChatPayload): void {
@@ -186,7 +174,7 @@ export class OpenRouterService {
   public async sendChatRequest(payload: ChatPayload): Promise<ChatResponse> {
     const requestId = Math.random().toString(36).substring(7);
     const startTime = Date.now();
-    this.logRequest(requestId, payload, startTime);
+    this.logger.logRequestStart(requestId, this.modelConfig.model, payload.messages?.length || 0);
 
     return this.retryWithBackoff(async () => {
       try {
@@ -205,31 +193,58 @@ export class OpenRouterService {
 
         if (!response.ok) {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+          const duration = Date.now() - startTime;
+          
           if (response.status === 429) {
-            throw new OpenRouterError(
+            const rateLimitError = new OpenRouterError(
               'Rate limit exceeded',
               'RATE_LIMIT_ERROR',
               error
             );
+            this.logger.logRequestError(
+              requestId,
+              this.modelConfig.model,
+              payload.messages?.length || 0,
+              duration,
+              rateLimitError
+            );
+            throw rateLimitError;
           }
-          throw new OpenRouterError(
+          
+          const apiError = new OpenRouterError(
             `API request failed: ${error.error || response.statusText}`,
             'API_ERROR',
             error
           );
+          this.logger.logRequestError(
+            requestId,
+            this.modelConfig.model,
+            payload.messages?.length || 0,
+            duration,
+            apiError
+          );
+          throw apiError;
         }
 
         const data = await response.json();
-        const duration = (Date.now() - startTime) / 1000; // Convert to seconds
+        const duration = Date.now() - startTime;
 
         // Extract the response content from the API response
         const content = data.choices?.[0]?.message?.content;
         if (!content) {
-          throw new OpenRouterError(
+          const error = new OpenRouterError(
             'Invalid response format from API',
             'API_ERROR',
             data
           );
+          this.logger.logRequestError(
+            requestId,
+            this.modelConfig.model,
+            payload.messages?.length || 0,
+            duration,
+            error
+          );
+          throw error;
         }
 
         // Parse the JSON response
@@ -237,33 +252,68 @@ export class OpenRouterService {
         try {
           parsedContent = JSON.parse(content);
         } catch (error) {
-          throw new OpenRouterError(
+          const parseError = new OpenRouterError(
             'Failed to parse API response as JSON',
             'API_ERROR',
             { content, error }
           );
+          this.logger.logRequestError(
+            requestId,
+            this.modelConfig.model,
+            payload.messages?.length || 0,
+            duration,
+            parseError
+          );
+          throw parseError;
         }
 
         // Validate the response format
         if (!parsedContent.answer || typeof parsedContent.metadata?.duration !== 'number') {
-          throw new OpenRouterError(
+          const validationError = new OpenRouterError(
             'Invalid response format from API',
             'VALIDATION_ERROR',
             parsedContent
           );
+          this.logger.logRequestError(
+            requestId,
+            this.modelConfig.model,
+            payload.messages?.length || 0,
+            duration,
+            validationError
+          );
+          throw validationError;
         }
 
         const result = {
           answer: parsedContent.answer,
           metadata: {
-            duration: parsedContent.metadata.duration || duration
+            duration: parsedContent.metadata.duration || duration / 1000
           }
         };
 
-        this.logResponse(requestId, Date.now() - startTime, true);
+        this.logger.logRequestComplete(
+          requestId,
+          this.modelConfig.model,
+          payload.messages?.length || 0,
+          duration
+        );
         return result;
       } catch (error) {
-        this.logResponse(requestId, Date.now() - startTime, false, error);
+        const duration = Date.now() - startTime;
+        if (!(error instanceof OpenRouterError)) {
+          this.logger.logRequestError(
+            requestId,
+            this.modelConfig.model,
+            payload.messages?.length || 0,
+            duration,
+            error instanceof Error ? error : 'Unknown error'
+          );
+          throw new OpenRouterError(
+            'Unexpected error during API request',
+            'UNEXPECTED_ERROR',
+            error
+          );
+        }
         throw error;
       }
     });
