@@ -1,6 +1,8 @@
 import { useJourneyDetails } from '../../hooks/useJourneyDetails';
 import { Spinner } from '../../ui/spinner';
 import { Alert, AlertDescription } from '../../ui/alert';
+import { Button } from '../../ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { JourneyInfoSection } from './JourneyInfoSection';
 import { AdditionalNotesSection } from './AdditionalNotesSection';
 import { PlanGenerationSection } from './PlanGenerationSection';
@@ -73,6 +75,19 @@ export default function JourneyDetailsView({ journeyId }: JourneyDetailsViewProp
 
   return (
     <main className="space-y-8" role="main" aria-labelledby="page-title">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => window.location.href = '/journeys'}
+          className="inline-flex items-center gap-2"
+          aria-label="Back to journeys list"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Journeys
+        </Button>
+      </div>
+
       <h1 id="page-title" className="sr-only">Journey Details</h1>
       
       <div className="space-y-6">

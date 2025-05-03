@@ -1,23 +1,27 @@
 ---
-import "../styles/global.css";
+import { Navigation } from '../components/Navigation';
+import { ViewTransitions } from 'astro:transitions';
+import '../styles/global.css';
 
 interface Props {
-  title?: string;
+  title: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title } = Astro.props;
 ---
 
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+    <title>{title} - TripFit</title>
+    <ViewTransitions />
   </head>
   <body>
+    <Navigation client:load />
     <slot />
   </body>
 </html>
