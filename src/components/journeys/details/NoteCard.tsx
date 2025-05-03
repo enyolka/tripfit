@@ -10,10 +10,11 @@ interface NoteCardProps {
   onUpdate: (index: number, newNote: string) => void;
   onDelete: (index: number) => void;
   isUpdating: boolean;
+  initialIsEditing?: boolean;
 }
 
-export function NoteCard({ note, index, onUpdate, onDelete, isUpdating }: NoteCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
+export function NoteCard({ note, index, onUpdate, onDelete, isUpdating, initialIsEditing = false }: NoteCardProps) {
+  const [isEditing, setIsEditing] = useState(initialIsEditing);
   const [editedNote, setEditedNote] = useState(note);
 
   const handleSave = () => {
@@ -24,8 +25,14 @@ export function NoteCard({ note, index, onUpdate, onDelete, isUpdating }: NoteCa
   };
 
   const handleCancel = () => {
-    setEditedNote(note);
-    setIsEditing(false);
+    if (editedNote.length === 0 && note.length > 0) {
+      setIsEditing(false);
+    } else if (editedNote.length > 0 && note.length === 0 || editedNote.length === 0) {
+      onDelete(index);
+    } else {
+      setEditedNote(note);
+      setIsEditing(false);
+    }
   };
 
   return (

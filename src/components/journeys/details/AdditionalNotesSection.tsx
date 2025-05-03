@@ -45,6 +45,7 @@ export function AdditionalNotesSection({ notes, onNotesChange, isUpdating }: Add
                   onUpdate={handleNoteUpdate}
                   onDelete={handleNoteDelete}
                   isUpdating={isUpdating}
+                  initialIsEditing={note === ''}
                   aria-posinset={index + 1}
                   aria-setsize={notes.length}
                 />
