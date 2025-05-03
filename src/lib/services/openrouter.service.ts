@@ -138,23 +138,8 @@ export class OpenRouterService {
       messages: payload.messages,
       max_tokens: this.modelConfig.maxTokens,
       temperature: this.modelConfig.temperature,
-      response_format: payload.responseFormat ?? {
-        type: 'json_schema',
-        schema: {
-          type: 'object',
-          properties: {
-            answer: { type: 'string' },
-            metadata: {
-              type: 'object',
-              properties: {
-                duration: { type: 'number' }
-              },
-              required: ['duration']
-            }
-          },
-          required: ['answer', 'metadata']
-        }
-      }
+      // Remove default response_format to get text response
+      ...(payload.responseFormat && { response_format: payload.responseFormat })
     };
   }
 
@@ -247,47 +232,11 @@ export class OpenRouterService {
           throw error;
         }
 
-        // Parse the JSON response
-        let parsedContent: ChatResponse;
-        try {
-          parsedContent = JSON.parse(content);
-        } catch (error) {
-          const parseError = new OpenRouterError(
-            'Failed to parse API response as JSON',
-            'API_ERROR',
-            { content, error }
-          );
-          this.logger.logRequestError(
-            requestId,
-            this.modelConfig.model,
-            payload.messages?.length || 0,
-            duration,
-            parseError
-          );
-          throw parseError;
-        }
-
-        // Validate the response format
-        if (!parsedContent.answer || typeof parsedContent.metadata?.duration !== 'number') {
-          const validationError = new OpenRouterError(
-            'Invalid response format from API',
-            'VALIDATION_ERROR',
-            parsedContent
-          );
-          this.logger.logRequestError(
-            requestId,
-            this.modelConfig.model,
-            payload.messages?.length || 0,
-            duration,
-            validationError
-          );
-          throw validationError;
-        }
-
-        const result = {
-          answer: parsedContent.answer,
+        // Return the content directly as the answer
+        const result: ChatResponse = {
+          answer: content,
           metadata: {
-            duration: parsedContent.metadata.duration || duration / 1000
+            duration: duration / 1000
           }
         };
 
