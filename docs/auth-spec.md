@@ -5,11 +5,11 @@
 ### 1.1. Warstwa prezentacji (frontend)
 - **Strony Astro:**  
   - Utworzenie nowych stron:  
-    - `/login` – strona logowania (umożliwia logowanie z przekazywaniem komunikatów o błędach, przekierowanie do listy podróży po zalogowaniu). Jest to strona startowa dla niezalogowanych użytkowników. Użytkownik ma możliwość przełączenia widoku na formularz rejestracji lub odzyskiwania hasła
+    - `/login` – strona logowania (umożliwia logowanie z przekazywaniem komunikatów o błędach, przekierowanie do listy podróży po zalogowaniu). Użytkownik ma możliwość przełączenia widoku na formularz rejestracji lub odzyskiwania hasła
     - `/register` – strona rejestracji (formularz rejestracyjny z polami: email, hasło, potwierdzenie hasła oraz komunikaty walidacyjne).
     - `/recover` – strona odzyskiwania hasła (formularz do podania adresu email).
   - **Layout główny (@Layout.astro):**  
-    - Dla niezalogowanych użytkowników centralnymi elementami są przyciski „Zaloguj się” oraz „Zarejestruj się”, które kierują do odpowiedniej strony (na której widoki formularzy są przełączalne).
+    - Dla niezalogowanych użytkowników centralnymi elementami są przyciski „Zaloguj się" oraz „Zarejestruj się”, a także "Nie pamiętasz hasła?" które kierują do odpowiedniej strony (na której widoki formularzy są przełączalne).
     - Dla zalogowanych użytkowników wyświetlany jest przycisk „Wyloguj się” (zgodnie z implementacją w Navigation.tsx).
     - Mechanizm warunkowego renderowania elementów zależnie od stanu autentykacji.
 

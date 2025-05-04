@@ -8,6 +8,8 @@ interface Props {
 }
 
 const { title } = Astro.props;
+const pathname = new URL(Astro.request.url).pathname;
+const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/recover';
 ---
 
 <!DOCTYPE html>
@@ -21,7 +23,7 @@ const { title } = Astro.props;
     <ViewTransitions />
   </head>
   <body>
-    <Navigation client:load />
+    {!isAuthPage && <Navigation client:load />}
     <slot />
   </body>
 </html>
