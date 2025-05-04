@@ -38,17 +38,24 @@ US-001
 Tytuł: Rejestracja i uwierzytelnianie  
 Opis: Jako nowy użytkownik chcę mieć możliwość rejestracji konta oraz logowania się, aby uzyskać bezpieczny dostęp do aplikacji.  
 Kryteria akceptacji:  
-- Użytkownik musi podać adres e-mail i hasło podczas rejestracji.  
+- Użytkownik musi podać adres e-mail, hasło i potwierdzenie hasła podczas rejestracji.  
 - Po poprawnym wypełnieniu formularza i weryfikacji danych konto jest aktywowane.
 - System powinien umożliwić logowanie za pomocą zarejestrowanych danych.  
 
 US-002
 Tytuł: Logowanie do aplikacji
-Opis: Jako zarejestrowany użytkownik chcę móc się zalogować, aby mieć dostęp do profilu wraz z notatkami i wygenerowanymi planami.
+Opis: Jako zarejestrowany użytkownik chcę móc się zalogować, aby mieć dostęp do profilu wraz z notatkami i wygenerowanymi planami. Niezalogowani użytkownicy mają dostęp tylko do storny logowania/rejestracji.
 Kryteria akceptacji:
-- Po podaniu prawidłowych danych logowania użytkownik zostaje przekierowany do widoku profilu wraz z listą zakładek dla poszczególnych podróży.
+- Logowanie wymaga podania adresu email i hasła.
+- Po podaniu prawidłowych danych logowania użytkownik zostaje przekierowany do widoku listy podróży.
 - Błędne dane logowania wyświetlają komunikat o nieprawidłowych danych.
 - Dane dotyczące logowania przechowywane są w bezpieczny sposób.
+- Użytkownik MOŻE korzystać z tworzenia reguł "ad-hoc" bez logowania się do systemu (US-001).
+- Użytkownik NIE MOŻE korzystać z funkcji Kolekcji bez logowania się do systemu (US-003).
+- Użytkownik może logować się do systemu poprzez przycisk w prawym górnym rogu.
+- Użytkownik może się wylogować z systemu poprzez przycisk w prawym górnym rogu w głównym @Layout.astro.
+- Nie korzystamy z zewnętrznych serwisów logowania (np. Google, GitHub).
+- Odzyskiwanie hasła powinno być możliwe.
 
 US-003  
 Tytuł: Zarządzanie preferencjami w profilu  
