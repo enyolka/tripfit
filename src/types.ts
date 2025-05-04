@@ -1,4 +1,6 @@
 import type { Database } from "./db/database.types";
+import type { User } from '@supabase/supabase-js';
+import type { SupabaseClient } from './db/supabase.client';
 
 // ------------------------------------------------------------------------------------------------
 // 1. Profiles: Main DTO oparty o model bazy oraz interfejsy dla create/update
@@ -64,3 +66,18 @@ export interface UpdateGenerationCommand {
 // 4. Generation Error Logs: Main DTO oparty o model bazy
 // ------------------------------------------------------------------------------------------------
 export type GenerationErrorLogDTO = Database["public"]["Tables"]["generation_error_logs"]["Row"];
+
+// ------------------------------------------------------------------------------------------------
+// 5. Authentication State: Types for authentication state
+// ------------------------------------------------------------------------------------------------
+export interface AuthState {
+  user: User | null;
+  redirectTo?: string;
+}
+
+declare global {
+  interface Locals {
+    user: User | null;
+    supabase: SupabaseClient;
+  }
+}

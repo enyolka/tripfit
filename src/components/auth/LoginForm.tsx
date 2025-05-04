@@ -13,9 +13,13 @@ import {
 } from "@/components/ui/form"
 import type { LoginFormData } from "@/lib/validations/auth"
 import { loginSchema } from "@/lib/validations/auth"
-import { login } from "@/lib/services/auth"
+import { toast } from "sonner"
 
-export default function LoginForm() {
+interface LoginFormProps {
+  redirectTo?: string
+}
+
+export default function LoginForm({ redirectTo = '/journeys' }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<LoginFormData>({
@@ -29,13 +33,50 @@ export default function LoginForm() {
   async function onSubmit(data: LoginFormData) {
     setIsSubmitting(true)
     try {
-      await login(data)
-      // Po pomyślnym logowaniu nastąpi przekierowanie przez serwer
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error("Too many login attempts. Please try again later.")
+          return
+        }
+        throw new Error(result.error || 'Failed to sign in')
+      }
+
+      // Successful login - redirect
+      window.location.href = redirectTo
     } catch (error) {
       console.error("Login error:", error)
-      form.setError("root", { 
-        message: error instanceof Error ? error.message : "Login failed" 
-      })
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid login credentials")) {
+          form.setError("root", { 
+            message: "Invalid email or password" 
+          })
+        } else if (error.message.includes("Email not confirmed")) {
+          form.setError("root", { 
+            message: "Please verify your email address before logging in" 
+          })
+        } else {
+          form.setError("root", { 
+            message: error.message 
+          })
+        }
+      } else {
+        form.setError("root", { 
+          message: "An unexpected error occurred" 
+        })
+      }
     } finally {
       setIsSubmitting(false)
     }

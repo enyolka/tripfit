@@ -2,6 +2,25 @@
 import Layout from '../layouts/Layout.astro';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import LoginForm from '../components/auth/LoginForm';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { createSupabaseServerInstance } from '../db/supabase.client';
+
+// Enable server-side rendering
+export const prerender = false;
+
+// Get URL parameters and handle auth check
+const { cookies, redirect, url } = Astro;
+const redirectTo = url.searchParams.get('redirect_to') || '/journeys';
+const registered = url.searchParams.get('registered') === 'true';
+
+// Check if user is already logged in
+const supabase = createSupabaseServerInstance({ cookies, headers: Astro.request.headers });
+const { data: { user } } = await supabase.auth.getUser();
+
+// Redirect if already logged in
+if (user) {
+  return Astro.redirect(redirectTo);
+}
 ---
 
 <Layout title="Login - TripFit">
@@ -14,7 +33,14 @@ import LoginForm from '../components/auth/LoginForm';
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <LoginForm />
+        {registered && (
+          <Alert className="mb-4">
+            <AlertDescription>
+              Registration successful! You can now sign in with your credentials.
+            </AlertDescription>
+          </Alert>
+        )}
+        <LoginForm redirectTo={redirectTo} client:load />
         <div class="mt-4 text-center text-sm">
           Don't have an account?{' '}
           <a href="/register" class="text-primary hover:underline">Create account</a>

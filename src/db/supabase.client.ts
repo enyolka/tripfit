@@ -1,11 +1,44 @@
-import { createClient } from "@supabase/supabase-js";
+import type { AstroCookies } from 'astro';
+import { createServerClient, type CookieOptionsWithName, type SupabaseClient } from '@supabase/ssr';
+import type { Database } from './database.types';
 
-import type { Database } from "./database.types";
+export type { SupabaseClient };
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+export const cookieOptions: CookieOptionsWithName = {
+  path: '/',
+  secure: true,
+  httpOnly: true,
+  sameSite: 'lax',
+  maxAge: 1800, // 30 minutes
+};
 
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
-export type SupabaseClient = typeof supabaseClient;
+export function createSupabaseServerInstance(context: {
+  headers: Headers;
+  cookies: AstroCookies;
+}) {
+  const supabase = createServerClient<Database>(
+    import.meta.env.SUPABASE_URL,
+    import.meta.env.SUPABASE_KEY,
+    {
+      cookies: {
+        get(name: string) {
+          return context.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptionsWithName) {
+          context.cookies.set(name, value, {
+            ...cookieOptions,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptionsWithName) {
+          context.cookies.delete(name, {
+            ...cookieOptions,
+            ...options,
+          });
+        },
+      },
+    }
+  );
 
-export const DEFAULT_USER_ID = "18235e71-c060-4a6b-aa8d-2cf075cd0b9d";
+  return supabase;
+}

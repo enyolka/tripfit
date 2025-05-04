@@ -1,19 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Menu, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+// import { logout } from "@/lib/services/auth";
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentPath, setCurrentPath] = useState('/');
+  const [currentPath, setCurrentPath] = useState("/");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
   }, []);
 
-  const handleLogout = () => {
-    // TODO: Implement actual logout logic when auth is added
-    toast.info("Logout functionality will be implemented soon");
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      // await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -27,80 +35,106 @@ export function Navigation() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-4">
-            <a 
-              href="/journeys" 
+            <a
+              href="/journeys"
               className={`hover:text-primary transition-colors ${
-                currentPath.startsWith('/journeys') ? 'text-primary font-medium' : 'text-foreground'
+                currentPath.startsWith("/journeys")
+                  ? "text-primary font-medium"
+                  : "text-foreground"
               }`}
-              aria-current={currentPath.startsWith('/journeys') ? 'page' : undefined}
+              aria-current={currentPath.startsWith("/journeys") ? "page" : undefined}
             >
               Journeys
             </a>
-            <a 
-              href="/profile" 
+            <a
+              href="/profile"
               className={`hover:text-primary transition-colors ${
-                currentPath === '/profile' ? 'text-primary font-medium' : 'text-foreground'
+                currentPath === "/profile"
+                  ? "text-primary font-medium"
+                  : "text-foreground"
               }`}
-              aria-current={currentPath === '/profile' ? 'page' : undefined}
+              aria-current={currentPath === "/profile" ? "page" : undefined}
             >
               Profile
             </a>
-            <Button variant="outline" onClick={handleLogout}>
-              Log Out
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? "Logging out..." : "Log Out"}
             </Button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-md hover:bg-accent"
+            className="md:hidden p-2 rounded-md hover:bg-gray-100"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-menu"
-            aria-label="Toggle navigation menu"
+            aria-label="Open main menu"
           >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6" aria-hidden="true" />
-            ) : (
-              <Menu className="h-6 w-6" aria-hidden="true" />
-            )}
+            <span className="sr-only">Open main menu</span>
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {isMobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
           </button>
         </div>
 
         {/* Mobile Menu */}
         <div
+          className={`md:hidden ${isMobileMenuOpen ? "block" : "hidden"}`}
           id="mobile-menu"
-          className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}
-          aria-hidden={!isMobileMenuOpen}
         >
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a
               href="/journeys"
               className={`block px-3 py-2 rounded-md ${
-                currentPath.startsWith('/journeys') 
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent'
+                currentPath.startsWith("/journeys")
+                  ? "text-primary font-medium"
+                  : "text-foreground hover:text-primary"
               }`}
-              aria-current={currentPath.startsWith('/journeys') ? 'page' : undefined}
+              aria-current={currentPath.startsWith("/journeys") ? "page" : undefined}
             >
               Journeys
             </a>
             <a
               href="/profile"
               className={`block px-3 py-2 rounded-md ${
-                currentPath === '/profile'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent'
+                currentPath === "/profile"
+                  ? "text-primary font-medium"
+                  : "text-foreground hover:text-primary"
               }`}
-              aria-current={currentPath === '/profile' ? 'page' : undefined}
+              aria-current={currentPath === "/profile" ? "page" : undefined}
             >
               Profile
             </a>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full justify-start"
               onClick={handleLogout}
+              disabled={isLoggingOut}
             >
-              Log Out
+              {isLoggingOut ? "Logging out..." : "Log Out"}
             </Button>
           </div>
         </div>

@@ -1,45 +1,52 @@
-import { defineMiddleware } from "astro:middleware";
-// import type { MiddlewareHandler } from "astro";
-// import type { SupabaseClient } from "../db/supabase.client";
+import { defineMiddleware } from 'astro:middleware';
+import { createSupabaseServerInstance } from '../db/supabase.client';
 
-import { supabaseClient } from "../db/supabase.client";
-export const onRequest = defineMiddleware((context, next) => {
-  context.locals.supabase = supabaseClient;
-  return next();
-});
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/register',
+  '/recover',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/recover',
+];
 
-// export const onRequest: MiddlewareHandler = async (context, next) => {
-//   // Skip auth for non-API routes
-//   if (!context.url.pathname.startsWith('/api/')) {
-//     return next();
-//   }
+export const onRequest = defineMiddleware(
+  async ({ locals, cookies, request, url, redirect }, next) => {
+    // Skip auth check for public paths
+    if (PUBLIC_PATHS.includes(url.pathname)) {
+      return next();
+    }
 
-//   const supabase = context.locals.supabase as SupabaseClient;
-//   const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const supabase = createSupabaseServerInstance({
+      cookies,
+      headers: request.headers,
+    });
 
-//   // Handle auth errors
-//   if (authError) {
-//     console.error('Auth error:', authError);
-//     return new Response(JSON.stringify({
-//       error: "Authentication error",
-//       message: "Failed to verify authentication"
-//     }), {
-//       status: 500,
-//       headers: { 'Content-Type': 'application/json' }
-//     });
-//   }
+    // Get user session
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-//   // Check if user is authenticated
-//   if (!session) {
-//     return new Response(JSON.stringify({
-//       error: "Unauthorized",
-//       message: "You must be logged in to access this resource"
-//     }), {
-//       status: 401,
-//       headers: { 'Content-Type': 'application/json' }
-//     });
-//   }
+    if (error || !user) {
+      // If it's an API route, return 401
+      if (url.pathname.startsWith('/api/')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // For regular routes, redirect to login
+      const redirectTo = encodeURIComponent(url.pathname);
+      return redirect(`/login?redirect_to=${redirectTo}`);
+    }
 
-//   // Continue to route handler
-//   return next();
-// };
+    // Make user and supabase client available in routes
+    locals.user = {
+      id: user.id,
+      email: user.email,
+    };
+    locals.supabase = supabase;
+
+    return next();
+  },
+);
