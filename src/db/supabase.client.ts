@@ -6,10 +6,10 @@ export type { SupabaseClient };
 
 export const cookieOptions: CookieOptionsWithName = {
   path: '/',
-  secure: true,
+  secure: process.env.NODE_ENV === 'production',
   httpOnly: true,
   sameSite: 'lax',
-  maxAge: 1800, // 30 minutes
+  maxAge: 7 * 24 * 60 * 60, // 7 days
 };
 
 export function createSupabaseServerInstance(context: {

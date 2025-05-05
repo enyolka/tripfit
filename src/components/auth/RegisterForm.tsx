@@ -16,7 +16,7 @@ import { registerSchema } from "@/lib/validations/auth"
 import { toast } from "sonner"
 
 export default function RegisterForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -25,10 +25,11 @@ export default function RegisterForm() {
       password: "",
       confirmPassword: "",
     },
-  })
+  });
 
-  async function onSubmit(data: RegisterFormData) {
-    setIsSubmitting(true)
+  const handleSubmit = form.handleSubmit(async (data: RegisterFormData) => {
+    setIsSubmitting(true);
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -37,48 +38,35 @@ export default function RegisterForm() {
         },
         body: JSON.stringify({
           email: data.email,
-          password: data.password,
-          confirmPassword: data.confirmPassword,
-        }),
-      })
+          password: data.password
+        })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        if (response.status === 429) {
-          toast.error("Too many registration attempts. Please try again later.")
-          return
-        }
-        throw new Error(result.error || 'Failed to create account')
+        throw new Error(result.error || 'Failed to create account');
       }
 
-      // Show appropriate message based on email confirmation status
-      toast.success(result.message)
-      
-      // Only redirect if email confirmation is not required or user is already confirmed
-      if (result.user.confirmed_at) {
-        window.location.href = '/login?registered=true'
-      }
-
+      toast.success('Account created successfully! Please check your email to confirm your account.');
+      window.location.href = '/login?registered=true';
     } catch (error) {
-      console.error("Registration error:", error)
+      console.error('Registration error:', error);
       if (error instanceof Error) {
-        form.setError("root", { 
-          message: error.message
-        })
+        form.setError('root', { message: error.message });
+        toast.error(error.message);
       } else {
-        form.setError("root", { 
-          message: "An unexpected error occurred during registration"
-        })
+        form.setError('root', { message: 'An unexpected error occurred' });
+        toast.error('An unexpected error occurred');
       }
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  });
 
   return (
     <Form {...form}>
-      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
@@ -146,5 +134,5 @@ export default function RegisterForm() {
         </Button>
       </form>
     </Form>
-  )
+  );
 }
