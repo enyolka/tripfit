@@ -1,52 +1,50 @@
-import { defineMiddleware } from 'astro:middleware';
-import { createSupabaseServerInstance } from '../db/supabase.client';
+import { defineMiddleware } from "astro:middleware";
+import { createSupabaseServerInstance } from "../db/supabase.client";
 
-const PUBLIC_PATHS = [
-  '/',
-  '/login',
-  '/register',
-  '/recover',
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/recover',
-];
+// Ścieżki publiczne, dostępne dla niezalogowanych użytkowników
+const PUBLIC_PATHS = ["/login", "/register", "/recover"];
 
-export const onRequest = defineMiddleware(
-  async ({ locals, cookies, request, url, redirect }, next) => {
-    // Skip auth check for public paths
-    if (PUBLIC_PATHS.includes(url.pathname)) {
-      return next();
-    }
+// Ścieżki dostępne tylko dla zalogowanych użytkowników
+const PROTECTED_PATHS = ["/journeys", "/journey"];
 
-    const supabase = createSupabaseServerInstance({
-      cookies,
-      headers: request.headers,
-    });
+export const onRequest = defineMiddleware(async (context, next) => {
+  const { cookies, url, request } = context;
 
-    // Get user session
-    const { data: { user }, error } = await supabase.auth.getUser();
+  const supabase = createSupabaseServerInstance({ 
+    cookies,
+    headers: request.headers 
+  });
 
-    if (error || !user) {
-      // If it's an API route, return 401
-      if (url.pathname.startsWith('/api/')) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-      
-      // For regular routes, redirect to login
-      const redirectTo = encodeURIComponent(url.pathname);
-      return redirect(`/login?redirect_to=${redirectTo}`);
-    }
+  const { data: { user } } = await supabase.auth.getUser();
+  const currentPath = url.pathname;
 
-    // Make user and supabase client available in routes
-    locals.user = {
+  // Przekieruj zalogowanego użytkownika z publicznych ścieżek na /journeys
+  if (user && PUBLIC_PATHS.some(path => currentPath.startsWith(path))) {
+    return context.redirect('/journeys');
+  }
+
+  // Przekieruj niezalogowanego użytkownika z chronionych ścieżek na /login
+  if (!user && PROTECTED_PATHS.some(path => currentPath.startsWith(path))) {
+    return context.redirect('/login?redirect_to=' + encodeURIComponent(currentPath));
+  }
+
+  // Przekieruj niezalogowanego użytkownika z root path na /login
+  if (!user && currentPath === '/') {
+    return context.redirect('/login');
+  }
+
+  // Przekieruj zalogowanego użytkownika z root path na /journeys
+  if (user && currentPath === '/') {
+    return context.redirect('/journeys');
+  }
+
+  // Ustaw user w locals jeśli jest zalogowany
+  if (user) {
+    context.locals.user = {
       id: user.id,
       email: user.email,
     };
-    locals.supabase = supabase;
+  }
 
-    return next();
-  },
-);
+  return next();
+});

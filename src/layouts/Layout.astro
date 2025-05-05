@@ -1,15 +1,19 @@
 ---
 import { Navigation } from '../components/Navigation';
-import { ViewTransitions } from 'astro:transitions';
+import { Toaster } from 'sonner';
 import '../styles/global.css';
+import { createSupabaseServerInstance } from '../db/supabase.client';
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
-const pathname = new URL(Astro.request.url).pathname;
-const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/recover';
+const { cookies } = Astro;
+
+// Check if user is already logged in
+const supabase = createSupabaseServerInstance({ cookies, headers: Astro.request.headers });
+const { data: { user } } = await supabase.auth.getUser();
 ---
 
 <!DOCTYPE html>
@@ -20,11 +24,11 @@ const isAuthPage = pathname === '/login' || pathname === '/register' || pathname
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} - TripFit</title>
-    <ViewTransitions />
   </head>
   <body>
-    {!isAuthPage && <Navigation client:load />}
+    <Navigation isLoggedIn={!!user} client:load />
     <slot />
+    <Toaster richColors closeButton client:load />
   </body>
 </html>
 

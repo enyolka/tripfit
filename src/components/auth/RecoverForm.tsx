@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form"
 import type { RecoverFormData } from "@/lib/validations/auth"
 import { recoverSchema } from "@/lib/validations/auth"
-import { recover } from "@/lib/services/auth"
+import { toast } from "sonner"
 
 export default function RecoverForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -29,13 +29,38 @@ export default function RecoverForm() {
   async function onSubmit(data: RecoverFormData) {
     setIsSubmitting(true)
     try {
-      await recover(data)
+      const response = await fetch('/api/auth/recover', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error("Too many recovery attempts. Please try again later.")
+          return
+        }
+        throw new Error(result.error || 'Failed to send reset instructions')
+      }
+
       setIsEmailSent(true)
     } catch (error) {
       console.error("Password recovery error:", error)
-      form.setError("root", { 
-        message: error instanceof Error ? error.message : "Failed to send reset instructions" 
-      })
+      if (error instanceof Error) {
+        form.setError("root", { 
+          message: error.message
+        })
+      } else {
+        form.setError("root", { 
+          message: "An unexpected error occurred" 
+        })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -61,7 +86,7 @@ export default function RecoverForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="email"

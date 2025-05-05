@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form"
 import type { RegisterFormData } from "@/lib/validations/auth"
 import { registerSchema } from "@/lib/validations/auth"
-import { register } from "@/lib/services/auth"
+import { toast } from "sonner"
 
 export default function RegisterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -30,13 +30,41 @@ export default function RegisterForm() {
   async function onSubmit(data: RegisterFormData) {
     setIsSubmitting(true)
     try {
-      await register(data)
-      // Redirect will be handled by the server
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          confirmPassword: data.confirmPassword,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error("Too many registration attempts. Please try again later.")
+          return
+        }
+        throw new Error(result.error || 'Failed to create account')
+      }
+
+      // Successful registration - redirect handled by server
+      window.location.href = '/login?registered=true'
     } catch (error) {
       console.error("Registration error:", error)
-      form.setError("root", { 
-        message: error instanceof Error ? error.message : "Registration failed" 
-      })
+      if (error instanceof Error) {
+        form.setError("root", { 
+          message: error.message
+        })
+      } else {
+        form.setError("root", { 
+          message: "An unexpected error occurred" 
+        })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -44,7 +72,7 @@ export default function RegisterForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
