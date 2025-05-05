@@ -22,12 +22,17 @@ export function useJourneys(): UseJourneysReturn {
             setIsLoading(true);
             setError(null);
             const response = await fetch('/api/journeys');
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to fetch journeys');
+                if (response.status === 401) {
+                    throw new Error('You must be logged in to view journeys');
+                }
+                throw new Error(data.error || 'Failed to fetch journeys');
             }
-            const { journeys: data } = await response.json();
-            setJourneys(data);
-            setOriginalJourneys(data);
+
+            setJourneys(data.journeys);
+            setOriginalJourneys(data.journeys);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred while fetching journeys');
         } finally {
@@ -46,13 +51,16 @@ export function useJourneys(): UseJourneysReturn {
                 body: JSON.stringify(journey),
             });
             
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to create journey');
+                if (response.status === 401) {
+                    throw new Error('You must be logged in to create a journey');
+                }
+                throw new Error(data.error || 'Failed to create journey');
             }
             
-            const newJourney = await response.json();
-            setJourneys(prev => [...prev, newJourney]);
-            setOriginalJourneys(prev => [...prev, newJourney]);
+            setJourneys(prev => [...prev, data]);
+            setOriginalJourneys(prev => [...prev, data]);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred while creating journey');
             throw err;
@@ -65,9 +73,15 @@ export function useJourneys(): UseJourneysReturn {
             const response = await fetch(`/api/journeys/${id}`, {
                 method: 'DELETE'
             });
+
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to delete journey');
+                if (response.status === 401) {
+                    throw new Error('You must be logged in to delete a journey');
+                }
+                throw new Error(data.error || 'Failed to delete journey');
             }
+
             setJourneys(prev => prev.filter(journey => journey.id !== id));
             setOriginalJourneys(prev => prev.filter(journey => journey.id !== id));
         } catch (err) {

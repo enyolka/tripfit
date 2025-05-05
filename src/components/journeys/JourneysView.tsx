@@ -5,6 +5,8 @@ import { FilterControls } from './FilterControls';
 import { JourneyItem } from './JourneyItem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { NewJourneyModal } from './NewJourneyModal';
+import { PlusIcon, MapIcon } from 'lucide-react';
+import { Card, CardContent } from '../ui/card';
 import type { CreateJourneyCommand } from '../../types';
 
 export default function JourneysView() {
@@ -75,32 +77,43 @@ export default function JourneysView() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">Your Journeys</h1>
-                <Button onClick={() => setNewJourneyModalOpen(true)}>New Journey</Button>
+                <Button onClick={() => setNewJourneyModalOpen(true)}>
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    New Journey
+                </Button>
             </div>
 
-            <FilterControls onFilterChange={handleFilterChange} />
-            
             {journeys.length === 0 ? (
-                <div className="text-center py-8">
-                    <p className="text-lg text-muted-foreground">No journeys found</p>
-                    <Button 
-                        variant="outline" 
-                        onClick={() => setNewJourneyModalOpen(true)}
-                        className="mt-4"
-                    >
-                        Create your first journey
-                    </Button>
-                </div>
+                <Card className="bg-muted/50">
+                    <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                        <MapIcon className="w-12 h-12 text-muted-foreground mb-4" />
+                        <h2 className="text-2xl font-semibold mb-2">Plan Your First Journey</h2>
+                        <p className="text-muted-foreground mb-6 max-w-md">
+                            Start your adventure by creating your first journey. Add destinations, 
+                            dates, and activities - we'll help you plan the perfect trip!
+                        </p>
+                        <Button 
+                            size="lg"
+                            onClick={() => setNewJourneyModalOpen(true)}
+                        >
+                            <PlusIcon className="w-4 h-4 mr-2" />
+                            Create Your First Journey
+                        </Button>
+                    </CardContent>
+                </Card>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {journeys.map((journey) => (
-                        <JourneyItem
-                            key={journey.id}
-                            journey={journey}
-                            onDelete={handleDeleteClick}
-                        />
-                    ))}
-                </div>
+                <>
+                    <FilterControls onFilterChange={handleFilterChange} />
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {journeys.map((journey) => (
+                            <JourneyItem
+                                key={journey.id}
+                                journey={journey}
+                                onDelete={handleDeleteClick}
+                            />
+                        ))}
+                    </div>
+                </>
             )}
 
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -1,7 +1,6 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '../../db/supabase.client';
 import type { CreateJourneyCommand, JourneyDTO, UpdateJourneyCommand } from '../../types';
 import type { Database } from '../../db/database.types';
-import { DEFAULT_USER_ID } from '../../db/supabase.client';
 
 class JourneyServiceError extends Error {
   constructor(
@@ -15,19 +14,68 @@ class JourneyServiceError extends Error {
 }
 
 export class JourneyService {
-  constructor(private readonly supabase: SupabaseClient<Database>) {}
+  constructor(private readonly supabase: SupabaseClient<Database>) {
+    if (!supabase) {
+      throw new JourneyServiceError(
+        'Supabase client is not initialized',
+        'INITIALIZATION_ERROR'
+      );
+    }
 
-  async createJourney(command: CreateJourneyCommand): Promise<JourneyDTO> {
+    if (!supabase.auth) {
+      throw new JourneyServiceError(
+        'Supabase auth is not initialized',
+        'INITIALIZATION_ERROR'
+      );
+    }
+  }
+
+  private async getUserId(): Promise<string> {
     try {
-      const { data, error } = await this.supabase
+      const { data: { user }, error } = await this.supabase.auth.getUser();
+      
+      if (error) {
+        throw new JourneyServiceError(
+          'Failed to get authenticated user',
+          'UNAUTHORIZED',
+          error
+        );
+      }
+      
+      if (!user) {
+        throw new JourneyServiceError(
+          'User not authenticated',
+          'UNAUTHORIZED'
+        );
+      }
+
+      return user.id;
+    } catch (error) {
+      if (error instanceof JourneyServiceError) {
+        throw error;
+      }
+
+      throw new JourneyServiceError(
+        'Failed to verify authentication',
+        'UNAUTHORIZED',
+        error
+      );
+    }
+  }
+
+  async createJourney(data: Omit<CreateJourneyCommand, 'user_id'>): Promise<JourneyDTO> {
+    try {
+      const userId = await this.getUserId();
+
+      const { data: createdData, error } = await this.supabase
         .from('journeys')
         .insert({
-          destination: command.destination,
-          departure_date: command.departure_date,
-          return_date: command.return_date,
-          activities: command.activities,
-          additional_notes: command.additional_notes || [],
-          user_id: DEFAULT_USER_ID
+          destination: data.destination,
+          departure_date: data.departure_date,
+          return_date: data.return_date,
+          activities: data.activities,
+          additional_notes: data.additional_notes || [],
+          user_id: userId
         })
         .select()
         .single();
@@ -62,7 +110,7 @@ export class JourneyService {
         }
       }
 
-      if (!data) {
+      if (!createdData) {
         throw new JourneyServiceError(
           'No data returned after journey creation',
           'NO_DATA_RETURNED'
@@ -70,9 +118,9 @@ export class JourneyService {
       }
 
       return {
-        ...data,
-        additional_notes: Array.isArray(data.additional_notes) 
-          ? data.additional_notes 
+        ...createdData,
+        additional_notes: Array.isArray(createdData.additional_notes)
+          ? createdData.additional_notes
           : []
       };
     } catch (error) {
@@ -90,10 +138,12 @@ export class JourneyService {
 
   async getJourneys(): Promise<JourneyDTO[]> {
     try {
+      const userId = await this.getUserId();
+
       const { data, error } = await this.supabase
         .from('journeys')
         .select('*')
-        .eq('user_id', DEFAULT_USER_ID)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -104,11 +154,8 @@ export class JourneyService {
         );
       }
 
-      if (!data) {
-        return [];
-      }
-
-      return data.map(journey => ({
+      // Always return an array, empty if no data
+      return (data || []).map((journey: Database['public']['Tables']['journeys']['Row']) => ({
         ...journey,
         additional_notes: Array.isArray(journey.additional_notes)
           ? journey.additional_notes
@@ -129,11 +176,13 @@ export class JourneyService {
 
   async getJourney(journeyId: number): Promise<JourneyDTO> {
     try {
+      const userId = await this.getUserId();
+
       const { data, error } = await this.supabase
         .from('journeys')
         .select('*')
         .eq('id', journeyId)
-        .eq('user_id', DEFAULT_USER_ID)
+        .eq('user_id', userId)
         .single();
 
       if (error) {
@@ -172,12 +221,14 @@ export class JourneyService {
 
   async deleteJourney(journeyId: number): Promise<void> {
     try {
+      const userId = await this.getUserId();
+
       // First check if journey exists and belongs to user
       const { data: journey, error: checkError } = await this.supabase
         .from('journeys')
         .select('id')
         .eq('id', journeyId)
-        .eq('user_id', DEFAULT_USER_ID)
+        .eq('user_id', userId)
         .single();
 
       if (checkError || !journey) {
@@ -192,7 +243,7 @@ export class JourneyService {
         .from('journeys')
         .delete()
         .eq('id', journeyId)
-        .eq('user_id', DEFAULT_USER_ID);
+        .eq('user_id', userId);
 
       if (deleteError) {
         throw new JourneyServiceError(
@@ -216,12 +267,14 @@ export class JourneyService {
 
   async updateJourney(journeyId: number, command: UpdateJourneyCommand): Promise<JourneyDTO> {
     try {
+      const userId = await this.getUserId();
+
       // First get the current journey data
       const { data: currentJourney, error: getError } = await this.supabase
         .from('journeys')
         .select('*')
         .eq('id', journeyId)
-        .eq('user_id', DEFAULT_USER_ID)
+        .eq('user_id', userId)
         .single();
 
       if (getError || !currentJourney) {
@@ -244,7 +297,7 @@ export class JourneyService {
         .from('journeys')
         .update(updateData)
         .eq('id', journeyId)
-        .eq('user_id', DEFAULT_USER_ID)
+        .eq('user_id', userId)
         .select()
         .single();
 

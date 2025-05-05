@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import type { CreateJourneyCommand } from '../../types';
 import { JourneyService } from '../../lib/services/journey.service';
-import { DEFAULT_USER_ID } from '../../db/supabase.client';
+import type { SupabaseClient } from '../../db/supabase.client';
 
 // Disable static pre-rendering for API routes
 export const prerender = false;
@@ -17,7 +17,6 @@ const createJourneySchema = z.object({
 }).refine((data) => {
   const departure = new Date(data.departure_date);
   const returnDate = new Date(data.return_date);
-  
   return departure <= returnDate;
 }, {
   message: "Departure date must be before or equal to return date",
@@ -26,7 +25,7 @@ const createJourneySchema = z.object({
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
-    const journeyService = new JourneyService(locals.supabase);
+    const journeyService = new JourneyService(locals.supabase as SupabaseClient);
     const journeys = await journeyService.getJourneys();
 
     return new Response(JSON.stringify({ journeys }), {
@@ -37,6 +36,22 @@ export const GET: APIRoute = async ({ locals }) => {
     });
   } catch (error) {
     console.error('Error fetching journeys:', error);
+
+    // Handle service-specific errors
+    if (error && typeof error === 'object' && 'name' in error) {
+      if (error.name === 'JourneyServiceError' && 'code' in error) {
+        switch (error.code) {
+          case 'UNAUTHORIZED':
+            return new Response(JSON.stringify({
+              error: "You must be logged in to view journeys"
+            }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' }
+            });
+        }
+      }
+    }
+
     return new Response(JSON.stringify({
       error: "Internal Server Error",
       message: error instanceof Error ? error.message : "Unknown error occurred"
@@ -49,20 +64,9 @@ export const GET: APIRoute = async ({ locals }) => {
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    // 1. Get and validate the auth context
-    // const supabase = locals.supabase;
-    // const { data: { user } } = await supabase.auth.getUser();
-
-    // if (!user) {
-    //   return new Response(JSON.stringify({
-    //     error: "Unauthorized - You must be logged in to create a journey"
-    //   }), {
-    //     status: 401,
-    //     headers: { 'Content-Type': 'application/json' }
-    //   });
-    // }
-
-    // 2. Parse and validate request body
+    const journeyService = new JourneyService(locals.supabase as SupabaseClient);
+    
+    // Parse and validate request body
     const rawData = await request.json();
     const validationResult = createJourneySchema.safeParse(rawData);
 
@@ -76,17 +80,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Create journey using service with default user
-    const journeyService = new JourneyService(locals.supabase);
-    const command: CreateJourneyCommand = {
-      ...validationResult.data,
-    //   user_id: user.id
-      user_id: DEFAULT_USER_ID // Add default user ID
-    };
+    const createdJourney = await journeyService.createJourney(validationResult.data);
 
-    const createdJourney = await journeyService.createJourney(command);
-
-    // 5. Return successful response with created journey
     return new Response(JSON.stringify(createdJourney), {
       status: 201,
       headers: { 'Content-Type': 'application/json' }
@@ -94,6 +89,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     
   } catch (error) {
     console.error('Error creating journey:', error);
+
+    // Handle service-specific errors
+    if (error && typeof error === 'object' && 'name' in error) {
+      if (error.name === 'JourneyServiceError' && 'code' in error) {
+        switch (error.code) {
+          case 'UNAUTHORIZED':
+            return new Response(JSON.stringify({
+              error: "You must be logged in to create a journey"
+            }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' }
+            });
+        }
+      }
+    }
+
     return new Response(JSON.stringify({
       error: "Internal Server Error",
       message: error instanceof Error ? error.message : "Unknown error occurred"
