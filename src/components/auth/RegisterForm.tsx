@@ -52,8 +52,14 @@ export default function RegisterForm() {
         throw new Error(result.error || 'Failed to create account')
       }
 
-      // Successful registration - redirect handled by server
-      window.location.href = '/login?registered=true'
+      // Show appropriate message based on email confirmation status
+      toast.success(result.message)
+      
+      // Only redirect if email confirmation is not required or user is already confirmed
+      if (result.user.confirmed_at) {
+        window.location.href = '/login?registered=true'
+      }
+
     } catch (error) {
       console.error("Registration error:", error)
       if (error instanceof Error) {
@@ -62,7 +68,7 @@ export default function RegisterForm() {
         })
       } else {
         form.setError("root", { 
-          message: "An unexpected error occurred" 
+          message: "An unexpected error occurred during registration"
         })
       }
     } finally {
