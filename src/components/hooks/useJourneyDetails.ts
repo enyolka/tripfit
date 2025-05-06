@@ -40,28 +40,31 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
     setIsLoadingGenerations(true);
 
     try {
-      const [journeyResponse, generationsResponse] = await Promise.all([
-        fetch(`/api/journeys/${journeyId}`),
-        fetch(`/api/journeys/${journeyId}/generations`)
-      ]);
-
+      // First fetch journey details
+      const journeyResponse = await fetch(`/api/journeys/${journeyId}`);
       if (!journeyResponse.ok) {
         const journeyError = await journeyResponse.json();
         throw new Error(journeyError.error || 'Failed to fetch journey details');
       }
-
-      if (!generationsResponse.ok) {
-        const generationsError = await generationsResponse.json();
-        throw new Error(generationsError.error || 'Failed to fetch generations');
-      }
-
-      const [journeyData, generationsData] = await Promise.all([
-        journeyResponse.json(),
-        generationsResponse.json()
-      ]);
-
+      const journeyData = await journeyResponse.json();
       setJourney(journeyData);
-      setGenerations(generationsData);
+
+      // Then fetch generations if journey exists
+      try {
+        const generationsResponse = await fetch(`/api/journeys/${journeyId}/generations`);
+        if (generationsResponse.ok) {
+          const generationsData = await generationsResponse.json();
+          setGenerations(generationsData);
+        } else if (generationsResponse.status !== 404) {
+          // Only treat non-404 responses as errors
+          const generationsError = await generationsResponse.json();
+          console.warn('Failed to fetch generations:', generationsError);
+        }
+        setGenerations([]); // Empty array for new journeys or error cases
+      } catch (genErr) {
+        console.warn('Error fetching generations:', genErr);
+        setGenerations([]);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
@@ -117,16 +120,17 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.error || `Failed to generate plan (${response.status})`;
+        // Format error message, prioritizing the error message from the API
+        const errorMessage = data.message || data.error || `Failed to generate plan (${response.status})`;
         throw new Error(errorMessage);
       }
 
       setGenerations(prev => [data, ...prev]);
       toast.success('Plan generated successfully');
     } catch (err) {
+      // Set error state but don't show toast - error message is already shown by the ErrorBoundary
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate plan';
       setError(errorMessage);
-      toast.error(errorMessage);
     } finally {
       setIsGeneratingPlan(false);
     }
