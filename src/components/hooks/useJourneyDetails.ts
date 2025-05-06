@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { JourneyDTO, GenerationDTO, UpdateJourneyCommand, CreateGenerationCommand } from '../../types';
+import { toast } from 'sonner';
 
 interface UseJourneyDetailsReturn {
   journey: JourneyDTO | null;
@@ -34,28 +35,39 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
   const [error, setError] = useState<string | null>(null);
 
   const fetchJourneyDetails = useCallback(async () => {
+    setError(null);
+    setIsLoadingJourney(true);
+    setIsLoadingGenerations(true);
+
     try {
-      setError(null);
-      setIsLoadingJourney(true);
-      setIsLoadingGenerations(true);
+      const [journeyResponse, generationsResponse] = await Promise.all([
+        fetch(`/api/journeys/${journeyId}`),
+        fetch(`/api/journeys/${journeyId}/generations`)
+      ]);
 
-      // Fetch journey details
-      const journeyResponse = await fetch(`/api/journeys/${journeyId}`);
       if (!journeyResponse.ok) {
-        throw new Error('Failed to fetch journey details');
+        const journeyError = await journeyResponse.json();
+        throw new Error(journeyError.error || 'Failed to fetch journey details');
       }
-      const journeyData = await journeyResponse.json();
-      setJourney(journeyData);
 
-      // Fetch generations
-      const generationsResponse = await fetch(`/api/journeys/${journeyId}/generations`);
       if (!generationsResponse.ok) {
-        throw new Error('Failed to fetch generations');
+        const generationsError = await generationsResponse.json();
+        throw new Error(generationsError.error || 'Failed to fetch generations');
       }
-      const generationsData = await generationsResponse.json();
+
+      const [journeyData, generationsData] = await Promise.all([
+        journeyResponse.json(),
+        generationsResponse.json()
+      ]);
+
+      setJourney(journeyData);
       setGenerations(generationsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setJourney(null);
+      setGenerations([]);
     } finally {
       setIsLoadingJourney(false);
       setIsLoadingGenerations(false);
@@ -74,13 +86,17 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update journey');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update journey');
       }
 
       const updatedJourney = await response.json();
       setJourney(updatedJourney);
+      toast.success('Journey updated successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update journey');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update journey';
+      setError(errorMessage);
+      toast.error(errorMessage);
       throw err;
     } finally {
       setIsUpdatingJourney(false);
@@ -98,15 +114,19 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
         body: JSON.stringify({ plan_preferences: preferences }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to generate plan');
+        const errorMessage = data.error || `Failed to generate plan (${response.status})`;
+        throw new Error(errorMessage);
       }
 
-      const newPlan = await response.json();
-      setGenerations(prev => [newPlan, ...prev]);
+      setGenerations(prev => [data, ...prev]);
+      toast.success('Plan generated successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate plan');
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate plan';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsGeneratingPlan(false);
     }
@@ -127,15 +147,19 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update plan');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update plan');
       }
 
       const updatedPlan = await response.json();
       setGenerations(prev =>
         prev.map(plan => (plan.id === id ? updatedPlan : plan))
       );
+      toast.success('Plan updated successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update plan');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update plan';
+      setError(errorMessage);
+      toast.error(errorMessage);
       throw err;
     } finally {
       setIsUpdatingPlan(null);
@@ -152,13 +176,17 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete plan');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete plan');
       }
 
       setGenerations(prev => prev.filter(plan => plan.id !== id));
       setPlanToDeleteId(null);
+      toast.success('Plan deleted successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete plan');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete plan';
+      setError(errorMessage);
+      toast.error(errorMessage);
       throw err;
     } finally {
       setIsDeletingPlan(null);

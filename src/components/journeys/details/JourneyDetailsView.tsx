@@ -9,6 +9,8 @@ import { PlanGenerationSection } from './PlanGenerationSection';
 import { GeneratedPlansList } from './GeneratedPlansList';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import type { UpdateJourneyCommand } from '../../../types';
+import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 interface JourneyDetailsViewProps {
   journeyId: number;
@@ -34,12 +36,17 @@ export default function JourneyDetailsView({ journeyId }: JourneyDetailsViewProp
     cancelDeletePlan,
   } = useJourneyDetails(journeyId);
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   const handlePlanDelete = async () => {
     if (planToDeleteId === null) return;
     await deletePlan(planToDeleteId);
   };
 
-  // Loading state
   if (isLoadingJourney) {
     return (
       <div 
@@ -53,13 +60,10 @@ export default function JourneyDetailsView({ journeyId }: JourneyDetailsViewProp
     );
   }
 
-  // Error state
-  if (error || !journey) {
+  if (!journey) {
     return (
       <Alert variant="destructive" role="alert">
-        <AlertDescription>
-          {error || 'Journey not found'}
-        </AlertDescription>
+        <AlertDescription>Journey not found</AlertDescription>
       </Alert>
     );
   }
@@ -68,7 +72,6 @@ export default function JourneyDetailsView({ journeyId }: JourneyDetailsViewProp
     try {
       await updateJourney(data);
     } catch (err) {
-      // Error will be handled by the hook and displayed in the UI
       console.error('Failed to update journey:', err);
     }
   };
