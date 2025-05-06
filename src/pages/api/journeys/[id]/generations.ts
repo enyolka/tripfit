@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
-import { DEFAULT_USER_ID, type SupabaseClient } from '../../../../db/supabase.client';
+import { type SupabaseClient } from '../../../../db/supabase.client';
 import { AIService, type AIModelConfig, AIServiceError } from '../../../../lib/services/ai.service';
 import { RateLimitService, RateLimitError } from '../../../../lib/services/rate-limit.service';
 import { type GenerationDTO } from '../../../../types';
@@ -47,11 +47,31 @@ const bodySchema = z.object({
 // GET endpoint handler
 export const GET: APIRoute = async ({ params, locals }) => {
   try {
-    const { id } = paramsSchema.parse(params);
-    const { supabase } = locals;
+    const validatedParams = paramsSchema.safeParse(params);
+    if (!validatedParams.success) {
+      return new Response(JSON.stringify({
+        error: "Invalid journey ID format",
+        details: validatedParams.error.errors
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const { id: journeyId } = validatedParams.data;
+
+    const supabase = locals.supabase as SupabaseClient;
+
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401 }
+      );
+    }
 
     const generationService = new GenerationService(supabase);
-    const generations = await generationService.getGenerationsForJourney(id);
+    const generations = await generationService.getGenerationsForJourney(journeyId);
     const validatedGenerations = generationResponseSchema.parse(generations);
 
     return new Response(JSON.stringify(validatedGenerations), {
@@ -124,11 +144,21 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       throw error;
     }
 
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401 }
+      );
+    }
+
+    // Check if journey exists and belongs to the user
     const { data: journey, error: journeyError } = await supabase
       .from('journeys')
       .select('*')
       .eq('id', journeyId)
-      .eq('user_id', DEFAULT_USER_ID)
+      .eq('user_id', user.id)
       .single();
 
     if (journeyError || !journey) {

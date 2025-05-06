@@ -12,7 +12,7 @@ const createJourneySchema = z.object({
   destination: z.string().min(1),
   departure_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   return_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  activities: z.string().optional(),
+  activities: z.string().nullable().optional(),
   additional_notes: z.array(z.string()).default([])
 }).refine((data) => {
   const departure = new Date(data.departure_date);

@@ -16,7 +16,7 @@ const updateJourneySchema = z.object({
   destination: z.string().min(1).optional(),
   departure_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").optional(),
   return_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").optional(),
-  activities: z.string().optional(),
+  activities: z.string().nullable().optional(),
   additional_notes: z.array(z.string()).optional()
 }).refine((data) => {
   // Only validate dates if both are provided
