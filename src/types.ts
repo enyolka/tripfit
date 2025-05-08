@@ -3,18 +3,18 @@ import type { User } from '@supabase/supabase-js';
 import type { SupabaseClient } from './db/supabase.client';
 
 // ------------------------------------------------------------------------------------------------
-// 1. Profiles: Main DTO oparty o model bazy oraz interfejsy dla create/update
+// 1. Preferences: Main DTO oparty o model bazy oraz interfejsy dla create/update
 // ------------------------------------------------------------------------------------------------
 // Główny model oparty o typ z bazy danych.
-export type ProfileDTO = Database["public"]["Tables"]["profiles"]["Row"];
+export type PreferenceDTO = Database["public"]["Tables"]["preferences"]["Row"];
 
 // Interfejsy dla operacji update (polegają wyłącznie na interfejsach)
-export interface UpdateProfileCommand {
+export interface UpdatePreferenceCommand {
 	preferences: string;
 	level: number;
 }
 
-// (Jeśli potrzebny, można dodać CreateProfileCommand zdefiniowany "ręcznie") 
+// (Jeśli potrzebny, można dodać CreatePreferenceCommand zdefiniowany "ręcznie") 
 
 // ------------------------------------------------------------------------------------------------
 // 2. Journeys: Main DTO oparty o model bazy z transformacją oraz interfejsy dla create/update

@@ -1,5 +1,5 @@
--- Migration: Re-enable RLS policies
--- Description: Re-enables all RLS policies for preferences, journeys, generations, and generation_error_logs tables
+-- Migration: Enable RLS policies
+-- Description: Enables RLS and creates policies for all tables
 -- Author: Copilot
 -- Date: 2025-05-05
 
@@ -9,7 +9,7 @@ alter table public.journeys enable row level security;
 alter table public.generations enable row level security;
 alter table public.generation_error_logs enable row level security;
 
--- Recreate policies for preferences table
+-- Create policies for preferences table
 create policy "Users can view their own preferences"
     on public.preferences
     for select
@@ -25,7 +25,7 @@ create policy "Users can update their own preferences"
     for update
     using (auth.uid() = user_id);
 
--- Recreate policies for journeys table
+-- Create policies for journeys table
 create policy "Users can view their own journeys"
     on public.journeys
     for select
@@ -46,34 +46,70 @@ create policy "Users can delete their own journeys"
     for delete
     using (auth.uid() = user_id);
 
--- Recreate policies for generations table
+-- Create policies for generations table
 create policy "Users can view generations for their journeys"
     on public.generations
     for select
-    using (auth.uid() = (select user_id from journeys where id = journey_id));
+    using (
+        exists (
+            select 1 from public.journeys
+            where journeys.id = generations.journey_id
+            and journeys.user_id = auth.uid()
+        )
+    );
 
 create policy "Users can create generations for their journeys"
     on public.generations
     for insert
-    with check (auth.uid() = (select user_id from journeys where id = journey_id));
+    with check (
+        exists (
+            select 1 from public.journeys
+            where journeys.id = journey_id
+            and journeys.user_id = auth.uid()
+        )
+    );
 
 create policy "Users can update generations for their journeys"
     on public.generations
     for update
-    using (auth.uid() = (select user_id from journeys where id = journey_id));
+    using (
+        exists (
+            select 1 from public.journeys
+            where journeys.id = generations.journey_id
+            and journeys.user_id = auth.uid()
+        )
+    );
 
 create policy "Users can delete generations for their journeys"
     on public.generations
     for delete
-    using (auth.uid() = (select user_id from journeys where id = journey_id));
+    using (
+        exists (
+            select 1 from public.journeys
+            where journeys.id = generations.journey_id
+            and journeys.user_id = auth.uid()
+        )
+    );
 
--- Recreate policies for generation_error_logs table
+-- Create policies for generation_error_logs table
 create policy "Users can view their own error logs"
     on public.generation_error_logs
     for select
-    using (auth.uid() = (select user_id from journeys where id = journey_id));
+    using (
+        exists (
+            select 1 from public.journeys
+            where journeys.id = generation_error_logs.journey_id
+            and journeys.user_id = auth.uid()
+        )
+    );
 
 create policy "Users can create error logs for their journeys"
     on public.generation_error_logs
     for insert
-    with check (auth.uid() = (select user_id from journeys where id = journey_id));
+    with check (
+        exists (
+            select 1 from public.journeys
+            where journeys.id = journey_id
+            and journeys.user_id = auth.uid()
+        )
+    );
