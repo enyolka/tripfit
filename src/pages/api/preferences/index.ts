@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import type { SupabaseClient } from '../../../db/supabase.client';
-import type { ProfileDTO, UpdateProfileCommand } from '../../../types';
-import { updateProfileSchema } from '../../../lib/validations/profile';
-import { ProfileService, ProfileError } from '../../../lib/services/profile.service';
+import type { PreferenceDTO, UpdatePreferenceCommand } from '../../../types';
+import { PreferenceService, PreferenceError } from '@/lib/services/preference.service';
+import { updatePreferenceSchema } from '@/lib/validations/preference';
 
 export const prerender = false;
 
@@ -22,13 +22,13 @@ export const GET: APIRoute = async ({ locals }) => {
       );
     }
 
-    // 2. Get user profile using service
-    const profileService = new ProfileService(locals.supabase as SupabaseClient);
-    const profile = await profileService.getProfile(user.id);
+    // 2. Get user preferences using service
+    const preferenceService = new PreferenceService(locals.supabase as SupabaseClient);
+    const preferences = await preferenceService.getPreference(user.id);
 
-    // 3. Return profile data
+    // 3. Return preferences data
     return new Response(
-      JSON.stringify(profile), 
+      JSON.stringify(preferences), 
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -36,14 +36,14 @@ export const GET: APIRoute = async ({ locals }) => {
     );
 
   } catch (error) {
-    console.error('Profile fetch error:', error);
+    console.error('Preferences fetch error:', error);
 
-    if (error instanceof ProfileError) {
+    if (error instanceof PreferenceError) {
       switch (error.code) {
         case 'NOT_FOUND':
           return new Response(
             JSON.stringify({ 
-              error: "Profile not found" 
+              error: "Preferences not found" 
             }), 
             { 
               status: 404,
@@ -94,7 +94,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
     // 2. Parse and validate request body
     const rawData = await request.json();
-    const validationResult = updateProfileSchema.safeParse(rawData);
+    const validationResult = updatePreferenceSchema.safeParse(rawData);
 
     if (!validationResult.success) {
       return new Response(
@@ -109,13 +109,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // 3. Update profile using service
-    const profileService = new ProfileService(locals.supabase as SupabaseClient);
-    const updatedProfile = await profileService.updateProfile(user.id, validationResult.data as UpdateProfileCommand);
+    // 3. Update preferences using service
+    const preferenceService = new PreferenceService(locals.supabase as SupabaseClient);
+    const updatedPreferences = await preferenceService.updatePreference(user.id, validationResult.data as UpdatePreferenceCommand);
 
-    // 4. Return updated profile
+    // 4. Return updated preferences
     return new Response(
-      JSON.stringify(updatedProfile),
+      JSON.stringify(updatedPreferences),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -123,13 +123,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     );
 
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error('Preferences update error:', error);
 
-    if (error instanceof ProfileError) {
+    if (error instanceof PreferenceError) {
       switch (error.code) {
         case 'NOT_FOUND':
           return new Response(
-            JSON.stringify({ error: "Profile not found" }), 
+            JSON.stringify({ error: "Preferences not found" }), 
             { 
               status: 404,
               headers: { 'Content-Type': 'application/json' }

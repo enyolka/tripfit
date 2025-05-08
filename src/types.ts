@@ -10,7 +10,7 @@ export type PreferenceDTO = Database["public"]["Tables"]["preferences"]["Row"];
 
 // Interfejsy dla operacji update (polegają wyłącznie na interfejsach)
 export interface UpdatePreferenceCommand {
-	preferences: string;
+	preference: string;
 	level: number;
 }
 
