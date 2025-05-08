@@ -24,6 +24,12 @@ export class PreferenceService {
         .single();
 
       if (error) {
+        if (error.code === 'PGRST116') { // no rows returned
+          throw new PreferenceError(
+            'Preferences not found',
+            'NOT_FOUND'
+          );
+        }
         throw new PreferenceError(
           'Failed to fetch preferences',
           'DATABASE_ERROR',
@@ -54,7 +60,38 @@ export class PreferenceService {
 
   async updatePreference(userId: string, command: UpdatePreferenceCommand): Promise<PreferenceDTO> {
     try {
-      const { data, error } = await this.supabase
+      // Najpierw sprawdzamy, czy istnieją preferencje
+      const { data: existing, error: checkError } = await this.supabase
+        .from('preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // Jeśli nie ma preferencji, tworzymy nowe
+        const { data: inserted, error: insertError } = await this.supabase
+          .from('preferences')
+          .insert({
+            user_id: userId,
+            preference: command.preference,
+            level: command.level
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          throw new PreferenceError(
+            'Failed to create preferences',
+            'DATABASE_ERROR',
+            insertError
+          );
+        }
+
+        return inserted;
+      }
+
+      // Jeśli są preferencje, aktualizujemy je
+      const { data: updated, error: updateError } = await this.supabase
         .from('preferences')
         .update({
           preference: command.preference,
@@ -65,44 +102,29 @@ export class PreferenceService {
         .select()
         .single();
 
-      if (error) {
-        switch (error.code) {
-          case '23514': // check_violation
-            throw new PreferenceError(
-              'Preference data violates database constraints',
-              'CONSTRAINT_VIOLATION',
-              error
-            );
-          case '23503': // foreign_key_violation
-            throw new PreferenceError(
-              'Referenced user does not exist',
-              'NOT_FOUND',
-              error
-            );
-          default:
-            throw new PreferenceError(
-              'Failed to update preferences',
-              'DATABASE_ERROR',
-              error
-            );
-        }
+      if (updateError) {
+        throw new PreferenceError(
+          'Failed to update preferences',
+          'DATABASE_ERROR',
+          updateError
+        );
       }
 
-      if (!data) {
+      if (!updated) {
         throw new PreferenceError(
           'Preferences not found',
           'NOT_FOUND'
         );
       }
 
-      return data;
+      return updated;
     } catch (error) {
       if (error instanceof PreferenceError) {
         throw error;
       }
 
       throw new PreferenceError(
-        'An unexpected error occurred while updating preferences',
+        'An unexpected error occurred',
         'DATABASE_ERROR',
         error
       );
