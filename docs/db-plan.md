@@ -12,10 +12,10 @@ Kolumny:
 
 ---
 
-### 1.2. profiles
+### 1.2. preferences
 Kolumny:
 - user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE  
-- preferences VARCHAR NOT NULL 
+- preference VARCHAR NOT NULL 
 - level INTEGER NOT NULL CHECK (level BETWEEN 1 AND 5)
 
 ---
