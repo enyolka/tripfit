@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import type { SupabaseClient } from '../../../db/supabase.client';
-import type { PreferenceDTO, UpdatePreferenceCommand } from '../../../types';
+import type { SupabaseClient } from '../../db/supabase.client';
+import type { PreferenceDTO, UpdatePreferenceCommand } from '../../types';
 import { PreferenceService, PreferenceError } from '@/lib/services/preference.service';
 import { updatePreferenceSchema } from '@/lib/validations/preference';
 
