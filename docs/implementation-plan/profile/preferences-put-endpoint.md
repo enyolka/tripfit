@@ -10,13 +10,13 @@ Endpoint umożliwia aktualizację preferencji profilu bieżącego, uwierzytelnio
   - **Wymagane:**  
     - Żaden parametr w URL  
     - JSON Request Body zawierający:  
-      - `preferences`: string (opis preferencji użytkownika)  
+      - `preference`: string (opis preferencji użytkownika)  
       - `level`: liczba (wymagane, wartość pomiędzy 1 a 5)
   - **Opcjonalne:** Żadnych  
 - **Request Body:**  
   ```json
   {
-    "preferences": "string",
+    "preference": "string",
     "level": number
   }
   ```

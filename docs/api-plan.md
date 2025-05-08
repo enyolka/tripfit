@@ -10,22 +10,22 @@
 ## 2. Endpoints
 
 ### Profiles
-- **GET /api/profiles/{id}**  
+- **GET /api/preferences/{id}**  
   Description: Retrieve a specific user's profile by ID.  
   Success: 200 OK with profile data.  
   Errors: 404 if the profile is not found or the user does not have access.
 
-- **GET /api/profile**  
+- **GET /api/preferences**  
   Description: Get the current authenticated user's profile.  
   Success: 200 OK with profile data.  
   Errors: 401 if the user is not authenticated.
 
-- **PUT /api/profile**  
+- **PUT /api/prreference**  
   Description: Update the current authenticated user's profile preferences.  
   Request JSON:  
   ```json
   {
-    "preferences": string,
+    "preference": string,
     "level": number
   }
   ```  
