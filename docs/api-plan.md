@@ -25,7 +25,7 @@
   Request JSON:  
   ```json
   {
-    "preferences": { ... },
+    "preferences": string,
     "level": number
   }
   ```  

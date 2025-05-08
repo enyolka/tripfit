@@ -10,7 +10,7 @@ export type ProfileDTO = Database["public"]["Tables"]["profiles"]["Row"];
 
 // Interfejsy dla operacji update (polegają wyłącznie na interfejsach)
 export interface UpdateProfileCommand {
-	preferences: Record<string, any> | string;
+	preferences: string;
 	level: number;
 }
 
