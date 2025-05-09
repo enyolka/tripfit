@@ -59,8 +59,11 @@ export function useJourneyDetails(journeyId: number): UseJourneyDetailsReturn {
           // Only treat non-404 responses as errors
           const generationsError = await generationsResponse.json();
           console.warn('Failed to fetch generations:', generationsError);
+          setGenerations([]); // Set empty array only on error
+        } else {
+          // Set empty array for new journeys or 404 cases
+          setGenerations([]);
         }
-        setGenerations([]); // Empty array for new journeys or error cases
       } catch (genErr) {
         console.warn('Error fetching generations:', genErr);
         setGenerations([]);

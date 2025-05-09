@@ -77,8 +77,8 @@ export default function JourneyDetailsView({ journeyId }: JourneyDetailsViewProp
   };
 
   return (
-    <main className="space-y-8" role="main" aria-labelledby="page-title">
-      <div className="flex items-center gap-4">
+    <main className="space-y-8 md:space-y-0" role="main" aria-labelledby="page-title">
+      <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
           size="sm"
@@ -93,32 +93,39 @@ export default function JourneyDetailsView({ journeyId }: JourneyDetailsViewProp
 
       <h1 id="page-title" className="sr-only">Journey Details</h1>
       
-      <div className="space-y-6">
-        <JourneyInfoSection
-          journeyData={journey}
-          onUpdateJourney={handleJourneyUpdate}
-          isUpdating={isUpdatingJourney}
-        />
+      {/* Main two-column layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left column - Journey details and notes */}
+        <div className="space-y-6">
+          <JourneyInfoSection
+            journeyData={journey}
+            onUpdateJourney={handleJourneyUpdate}
+            isUpdating={isUpdatingJourney}
+          />
 
-        <AdditionalNotesSection
-          notes={journey.additional_notes}
-          onNotesChange={(notes) => handleJourneyUpdate({ additional_notes: notes })}
-          isUpdating={isUpdatingJourney}
-        />
+          <AdditionalNotesSection
+            notes={journey.additional_notes}
+            onNotesChange={(notes) => handleJourneyUpdate({ additional_notes: notes })}
+            isUpdating={isUpdatingJourney}
+          />
+        </div>
+
+        {/* Right column - Plan generation and generated plans */}
+        <div className="space-y-6">
+          <PlanGenerationSection
+            onGeneratePlan={generatePlan}
+            isGenerating={isGeneratingPlan}
+          />
+
+          <GeneratedPlansList
+            plans={generations}
+            isLoading={isLoadingGenerations}
+            onUpdatePlan={updatePlan}
+            onDeleteRequest={requestDeletePlan}
+            isUpdatingPlan={isUpdatingPlan}
+          />
+        </div>
       </div>
-
-      <PlanGenerationSection
-        onGeneratePlan={generatePlan}
-        isGenerating={isGeneratingPlan}
-      />
-
-      <GeneratedPlansList
-        plans={generations}
-        isLoading={isLoadingGenerations}
-        onUpdatePlan={updatePlan}
-        onDeleteRequest={requestDeletePlan}
-        isUpdatingPlan={isUpdatingPlan}
-      />
 
       {planToDeleteId !== null && (
         <DeleteConfirmationModal
