@@ -53,6 +53,17 @@ export function Navigation({ isLoggedIn = false }: NavigationProps) {
                 >
                   Journeys
                 </a>
+                <a
+                  href="/profile"
+                  className={`hover:text-primary transition-colors ${
+                    currentPath === "/profile"
+                      ? "text-primary font-medium"
+                      : "text-foreground"
+                  }`}
+                  aria-current={currentPath === "/profile" ? "page" : undefined}
+                >
+                  Profile
+                </a>
                 <Button
                   variant="outline"
                   onClick={handleLogout}
@@ -139,6 +150,17 @@ export function Navigation({ isLoggedIn = false }: NavigationProps) {
                   aria-current={currentPath.startsWith("/journeys") ? "page" : undefined}
                 >
                   Journeys
+                </a>
+                <a
+                  href="/profile"
+                  className={`block px-3 py-2 rounded-md ${
+                    currentPath === "/profile"
+                      ? "text-primary font-medium"
+                      : "text-foreground hover:text-primary"
+                  }`}
+                  aria-current={currentPath === "/profile" ? "page" : undefined}
+                >
+                  Profile
                 </a>
                 <Button
                   variant="outline"
