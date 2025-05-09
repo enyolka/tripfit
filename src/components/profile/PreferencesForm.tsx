@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { PreferenceDTO, CreatePreferenceCommand, UpdatePreferenceCommand } from "@/types";
 import { createPreferenceSchema, updatePreferenceSchema } from "@/lib/validations/preference";
 
@@ -16,6 +17,7 @@ interface PreferencesFormProps {
 export default function PreferencesForm({ preferences, onRefresh }: PreferencesFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [preferenceToDeleteId, setPreferenceToDeleteId] = useState<string | null>(null);
   const [newPreference, setNewPreference] = useState<CreatePreferenceCommand>({
     activity_name: "",
     level: 1
@@ -24,6 +26,24 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
     activity_name: "",
     level: 1
   });
+
+  const validateNewPreference = () => {
+    try {
+      createPreferenceSchema.parse(newPreference);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const validateEditedPreference = () => {
+    try {
+      updatePreferenceSchema.parse(editedPreference);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,15 +117,13 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Czy na pewno chcesz usunąć tę preferencję?")) {
-      return;
-    }
+  const handleDelete = async () => {
+    if (!preferenceToDeleteId) return;
 
     try {
       setIsSubmitting(true);
       
-      const response = await fetch(`/api/preferences?id=${id}`, {
+      const response = await fetch(`/api/preferences?id=${preferenceToDeleteId}`, {
         method: "DELETE"
       });
 
@@ -115,6 +133,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
       }
 
       toast.success("Usunięto preferencję");
+      setPreferenceToDeleteId(null);
       onRefresh();
     } catch (err) {
       if (err instanceof Error) {
@@ -176,7 +195,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                   <Button 
                     type="button"
                     onClick={() => handleUpdate(preference.id)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !validateEditedPreference()}
                   >
                     <Check className="h-4 w-4 mr-2" />
                     Zapisz
@@ -213,7 +232,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(preference.id)}
+                    onClick={() => setPreferenceToDeleteId(preference.id)}
                     disabled={isSubmitting || editingId !== null}
                   >
                     <X className="h-4 w-4" />
@@ -260,7 +279,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
             </div>
             <Button 
               type="submit" 
-              disabled={isSubmitting || editingId !== null}
+              disabled={isSubmitting || editingId !== null || !validateNewPreference()}
             >
               <Plus className="h-4 w-4 mr-2" />
               Dodaj preferencję
@@ -268,6 +287,34 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
           </form>
         </CardContent>
       </Card>
+
+      {/* Modal potwierdzenia usunięcia */}
+      <Dialog open={preferenceToDeleteId !== null} onOpenChange={() => setPreferenceToDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Usuń preferencję</DialogTitle>
+            <DialogDescription>
+              Czy na pewno chcesz usunąć tę preferencję? Tej operacji nie można cofnąć.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setPreferenceToDeleteId(null)}
+              disabled={isSubmitting}
+            >
+              Anuluj
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Usuwanie..." : "Usuń"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

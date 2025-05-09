@@ -25,6 +25,11 @@ create policy "Users can update their own preferences"
     for update
     using (auth.uid() = user_id);
 
+create policy "Users can delete their own preferences"
+    on public.preferences
+    for delete
+    using (auth.uid() = user_id);   
+
 -- Create policies for journeys table
 create policy "Users can view their own journeys"
     on public.journeys
