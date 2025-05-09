@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '../../db/supabase.client';
-import type { PreferenceDTO, UpdatePreferenceCommand } from '../../types';
+import type { PreferenceDTO, CreatePreferenceCommand, UpdatePreferenceCommand } from '../../types';
 
 export class PreferenceError extends Error {
   constructor(
@@ -15,21 +15,15 @@ export class PreferenceError extends Error {
 export class PreferenceService {
   constructor(private supabase: SupabaseClient) {}
 
-  async getPreference(userId: string): Promise<PreferenceDTO> {
+  async getPreferences(userId: string): Promise<PreferenceDTO[]> {
     try {
       const { data, error } = await this.supabase
         .from('preferences')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .order('created_at', { ascending: false });
 
       if (error) {
-        if (error.code === 'PGRST116') { // no rows returned
-          throw new PreferenceError(
-            'Preferences not found',
-            'NOT_FOUND'
-          );
-        }
         throw new PreferenceError(
           'Failed to fetch preferences',
           'DATABASE_ERROR',
@@ -37,14 +31,7 @@ export class PreferenceService {
         );
       }
 
-      if (!data) {
-        throw new PreferenceError(
-          'Preferences not found',
-          'NOT_FOUND'
-        );
-      }
-
-      return data;
+      return data || [];
     } catch (error) {
       if (error instanceof PreferenceError) {
         throw error;
@@ -58,73 +45,126 @@ export class PreferenceService {
     }
   }
 
-  async updatePreference(userId: string, command: UpdatePreferenceCommand): Promise<PreferenceDTO> {
+  async createPreference(userId: string, command: CreatePreferenceCommand): Promise<PreferenceDTO> {
     try {
-      // Najpierw sprawdzamy, czy istnieją preferencje
-      const { data: existing, error: checkError } = await this.supabase
+      const { data, error } = await this.supabase
         .from('preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (checkError && checkError.code === 'PGRST116') {
-        // Jeśli nie ma preferencji, tworzymy nowe
-        const { data: inserted, error: insertError } = await this.supabase
-          .from('preferences')
-          .insert({
-            user_id: userId,
-            preference: command.preference,
-            level: command.level
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          throw new PreferenceError(
-            'Failed to create preferences',
-            'DATABASE_ERROR',
-            insertError
-          );
-        }
-
-        return inserted;
-      }
-
-      // Jeśli są preferencje, aktualizujemy je
-      const { data: updated, error: updateError } = await this.supabase
-        .from('preferences')
-        .update({
-          preference: command.preference,
-          level: command.level,
-          updated_at: new Date().toISOString()
+        .insert({
+          user_id: userId,
+          activity_name: command.activity_name,
+          level: command.level
         })
-        .eq('user_id', userId)
         .select()
         .single();
 
-      if (updateError) {
+      if (error) {
+        if (error.code === '23505') { // unique_violation
+          throw new PreferenceError(
+            'Ta aktywność już istnieje w Twoich preferencjach',
+            'CONSTRAINT_VIOLATION',
+            error
+          );
+        }
         throw new PreferenceError(
-          'Failed to update preferences',
+          'Failed to create preference',
           'DATABASE_ERROR',
-          updateError
+          error
         );
       }
 
-      if (!updated) {
+      if (!data) {
         throw new PreferenceError(
-          'Preferences not found',
-          'NOT_FOUND'
+          'Failed to create preference - no data returned',
+          'DATABASE_ERROR'
         );
       }
 
-      return updated;
+      return data;
     } catch (error) {
       if (error instanceof PreferenceError) {
         throw error;
       }
 
       throw new PreferenceError(
-        'An unexpected error occurred',
+        'An unexpected error occurred while creating preference',
+        'DATABASE_ERROR',
+        error
+      );
+    }
+  }
+
+  async updatePreference(userId: string, preferenceId: string, command: UpdatePreferenceCommand): Promise<PreferenceDTO> {
+    try {
+      const { data, error } = await this.supabase
+        .from('preferences')
+        .update({
+          activity_name: command.activity_name,
+          level: command.level,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', preferenceId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') { // unique_violation
+          throw new PreferenceError(
+            'Ta aktywność już istnieje w Twoich preferencjach',
+            'CONSTRAINT_VIOLATION',
+            error
+          );
+        }
+        throw new PreferenceError(
+          'Failed to update preference',
+          'DATABASE_ERROR',
+          error
+        );
+      }
+
+      if (!data) {
+        throw new PreferenceError(
+          'Preference not found or access denied',
+          'NOT_FOUND'
+        );
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof PreferenceError) {
+        throw error;
+      }
+
+      throw new PreferenceError(
+        'An unexpected error occurred while updating preference',
+        'DATABASE_ERROR',
+        error
+      );
+    }
+  }
+
+  async deletePreference(userId: string, preferenceId: string): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('preferences')
+        .delete()
+        .eq('id', preferenceId)
+        .eq('user_id', userId);
+
+      if (error) {
+        throw new PreferenceError(
+          'Failed to delete preference',
+          'DATABASE_ERROR',
+          error
+        );
+      }
+    } catch (error) {
+      if (error instanceof PreferenceError) {
+        throw error;
+      }
+
+      throw new PreferenceError(
+        'An unexpected error occurred while deleting preference',
         'DATABASE_ERROR',
         error
       );

@@ -5,16 +5,24 @@ import type { SupabaseClient } from './db/supabase.client';
 // ------------------------------------------------------------------------------------------------
 // 1. Preferences: Main DTO oparty o model bazy oraz interfejsy dla create/update
 // ------------------------------------------------------------------------------------------------
-// Główny model oparty o typ z bazy danych.
-export type PreferenceDTO = Database["public"]["Tables"]["preferences"]["Row"];
-
-// Interfejsy dla operacji update (polegają wyłącznie na interfejsach)
-export interface UpdatePreferenceCommand {
-	preference: string;
-	level: number;
+export interface PreferenceDTO {
+  id: string;
+  user_id: string;
+  activity_name: string;
+  level: number;
+  created_at: string;
+  updated_at: string;
 }
 
-// (Jeśli potrzebny, można dodać CreatePreferenceCommand zdefiniowany "ręcznie") 
+export interface CreatePreferenceCommand {
+  activity_name: string;
+  level: number;
+}
+
+export interface UpdatePreferenceCommand {
+  activity_name: string;
+  level: number;
+}
 
 // ------------------------------------------------------------------------------------------------
 // 2. Journeys: Main DTO oparty o model bazy z transformacją oraz interfejsy dla create/update
