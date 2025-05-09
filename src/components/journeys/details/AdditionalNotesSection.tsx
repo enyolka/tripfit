@@ -31,25 +31,27 @@ export function AdditionalNotesSection({ notes, onNotesChange, isUpdating }: Add
           <AddNoteButton onClick={handleAddNote} disabled={isUpdating} />
         </CardHeader>
         <CardContent>
-          <div role="feed" aria-label="Journey notes" className="space-y-4">
+          <div role="feed" aria-label="Journey notes">
             {notes.length === 0 ? (
               <p className="text-sm text-muted-foreground" role="status">
                 No notes yet. Click "Add Note" to create one.
               </p>
             ) : (
-              notes.map((note, index) => (
-                <NoteCard
-                  key={index}
-                  note={note}
-                  index={index}
-                  onUpdate={handleNoteUpdate}
-                  onDelete={handleNoteDelete}
-                  isUpdating={isUpdating}
-                  initialIsEditing={note === ''}
-                  aria-posinset={index + 1}
-                  aria-setsize={notes.length}
-                />
-              ))
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {notes.map((note, index) => (
+                  <NoteCard
+                    key={index}
+                    note={note}
+                    index={index}
+                    onUpdate={handleNoteUpdate}
+                    onDelete={handleNoteDelete}
+                    isUpdating={isUpdating}
+                    initialIsEditing={note === ''}
+                    aria-posinset={index + 1}
+                    aria-setsize={notes.length}
+                  />
+                ))}
+              </div>
             )}
           </div>
         </CardContent>
