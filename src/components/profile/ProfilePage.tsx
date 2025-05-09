@@ -3,30 +3,23 @@ import type { PreferenceDTO } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import PreferencesForm from "./PreferencesForm.tsx";
-import UserInfoForm from "./UserInfoForm.tsx";
+import PreferencesForm from "./PreferencesForm";
+import UserInfoForm from "./UserInfoForm";
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [preferences, setPreferences] = useState<PreferenceDTO | null>(null);
+  const [preferences, setPreferences] = useState<PreferenceDTO[]>([]);
 
   const fetchPreferences = async () => {
     try {
       const response = await fetch("/api/preferences");
-      const data = await response.json();
-      
       if (!response.ok) {
-        if (response.status === 404) {
-          // Brak preferencji to nie jest błąd - ustawiamy null
-          setPreferences(null);
-          return;
-        }
-        // Dla innych błędów HTTP rzucamy wyjątek
-        throw new Error(data.error || "Failed to fetch preferences");
+        throw new Error("Failed to fetch preferences");
       }
-      
+      const data = await response.json();
       setPreferences(data);
+      setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
@@ -64,14 +57,14 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle>Preferencje aktywności</CardTitle>
-          {!preferences && (
+          {preferences.length === 0 && (
             <CardDescription>
               Nie dodano jeszcze żadnych preferencji. Wypełnij poniższy formularz, aby określić swoje preferencje aktywności.
             </CardDescription>
           )}
         </CardHeader>
         <CardContent>
-          <PreferencesForm preferences={preferences} onUpdate={fetchPreferences} />
+          <PreferencesForm preferences={preferences} onRefresh={fetchPreferences} />
         </CardContent>
       </Card>
     </div>
