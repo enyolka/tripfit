@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
+import { Badge } from '../../ui/badge';
 import { JourneyDataForm } from './JourneyDataForm';
 import { ActionButtons } from './ActionButtons';
 import type { JourneyDTO, UpdateJourneyCommand } from '../../../types';
+
+interface ActivityWithLevel {
+  name: string;
+  level: number;
+}
 
 interface JourneyInfoSectionProps {
   journeyData: JourneyDTO;
@@ -24,7 +30,6 @@ export function JourneyInfoSection({ journeyData, onUpdateJourney, isUpdating }:
       await onUpdateJourney(formData);
       setIsEditing(false);
     } catch (error) {
-      // Error will be handled by parent component
       console.error('Failed to save journey:', error);
     }
   };
@@ -51,6 +56,17 @@ export function JourneyInfoSection({ journeyData, onUpdateJourney, isUpdating }:
       month: 'long',
       day: 'numeric',
       year: 'numeric',
+    });
+  };
+
+  const parseActivities = (activitiesString: string): ActivityWithLevel[] => {
+    if (!activitiesString) return [];
+    return activitiesString.split(',').map(activity => {
+      const [name, levelPart] = activity.split(' - poziom ');
+      return {
+        name: name.trim(),
+        level: parseInt(levelPart?.trim() || '1', 10) || 1
+      };
     });
   };
 
@@ -93,12 +109,24 @@ export function JourneyInfoSection({ journeyData, onUpdateJourney, isUpdating }:
                   <p aria-labelledby="return-label">{formatDate(journeyData.return_date)}</p>
                 </div>
               </div>
-              {journeyData.activities && typeof journeyData.activities === 'string' && (
-                <div>
-                  <h3 id="activities-label" className="text-sm font-medium text-muted-foreground">Activities</h3>
-                  <p aria-labelledby="activities-label">{journeyData.activities}</p>
-                </div>
-              )}
+              <div>
+                <h3 id="activities-label" className="text-sm font-medium text-muted-foreground">Activities</h3>
+                {journeyData.activities && typeof journeyData.activities === 'string' ? (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {parseActivities(journeyData.activities).map((activity, index) => (
+                      <Badge 
+                        key={index}
+                        variant="secondary" 
+                        className="bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-800/20 dark:text-blue-200 dark:hover:bg-blue-800/30 transition-colors"
+                      >
+                        {activity.name} (Level {activity.level})
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">There are no activities added yet.</p>
+                )}
+              </div>
             </div>
           )}
         </CardContent>

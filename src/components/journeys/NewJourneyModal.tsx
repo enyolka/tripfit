@@ -27,7 +27,6 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
 
   const [activities, setActivities] = useState<ActivityWithLevel[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userPreferences, setUserPreferences] = useState<PreferenceDTO[]>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
 
   useEffect(() => {
@@ -36,8 +35,6 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
         const response = await fetch('/api/preferences');
         if (!response.ok) throw new Error('Failed to fetch preferences');
         const data = await response.json();
-        setUserPreferences(data);
-        // Automatically add user preferences as activities
         const preferencesAsActivities = data.map((pref: PreferenceDTO) => ({
           name: pref.activity_name,
           level: pref.level
