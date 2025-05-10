@@ -38,7 +38,7 @@ Your response should be well-structured and consider:
 - Practical logistics and travel tips`;
 
     const activitiesString = journey.activities ? 
-      `Aktywności i poziomy zaawansowania:\n${journey.activities}` : 
+      `Activities and their level of advancement:\n${journey.activities}` : 
       'No specific activities mentioned';
 
     const userPrompt = `Please create a detailed travel plan for:
@@ -49,7 +49,7 @@ Additional Notes: ${journey.additional_notes.join(', ')}
 
 For each activity, provide recommendations appropriate for the specified skill level (1-5 scale).
 Include daily itineraries, suggested accommodations, and local transportation tips. 
-Result write in polish, and use simple formatting for easy readability and icons to highlight main points.`;
+Remember about easy readability and add icons to highlight main points.`;
 
     return {
       messages: [
