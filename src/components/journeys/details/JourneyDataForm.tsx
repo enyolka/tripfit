@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import type { UpdateJourneyCommand } from '../../../types';
+import type { UpdateJourneyCommand, PreferenceDTO } from '../../../types';
+import { toast } from 'sonner';
 
 interface ActivityWithLevel {
   name: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: number;
 }
 
 interface JourneyDataFormProps {
@@ -19,13 +19,45 @@ export function JourneyDataForm({ initialData, onFormChange }: JourneyDataFormPr
   const [activities, setActivities] = useState<ActivityWithLevel[]>(() => {
     if (!initialData.activities) return [];
     return initialData.activities.split(',').map(activity => {
-      const [name, level] = activity.split(' - poziom ');
+      const [name, levelPart] = activity.split(' - poziom ');
       return {
         name: name.trim(),
-        level: (level?.trim() as ActivityWithLevel['level']) || 'beginner'
+        level: parseInt(levelPart?.trim() || '1', 10) || 1
       };
     });
   });
+
+  const [userPreferences, setUserPreferences] = useState<PreferenceDTO[]>([]);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      try {
+        const response = await fetch('/api/preferences');
+        if (!response.ok) throw new Error('Failed to fetch preferences');
+        const data = await response.json();
+        setUserPreferences(data);
+      } catch (err) {
+        console.error('Error fetching preferences:', err);
+        toast.error('Could not load your activity preferences');
+      } finally {
+        setIsLoadingPreferences(false);
+      }
+    };
+
+    fetchUserPreferences();
+  }, []);
+
+  useEffect(() => {
+    // When preferences are loaded and no activities are set, initialize with user preferences
+    if (!isLoadingPreferences && userPreferences.length > 0 && activities.length === 0) {
+      const preferencesAsActivities = userPreferences.map(pref => ({
+        name: pref.activity_name,
+        level: pref.level
+      }));
+      updateActivities(preferencesAsActivities);
+    }
+  }, [isLoadingPreferences, userPreferences]);
 
   const updateActivities = (newActivities: ActivityWithLevel[]) => {
     setActivities(newActivities);
@@ -37,7 +69,7 @@ export function JourneyDataForm({ initialData, onFormChange }: JourneyDataFormPr
   };
 
   const handleAddActivity = () => {
-    updateActivities([...activities, { name: '', level: 'beginner' }]);
+    updateActivities([...activities, { name: '', level: 1 }]);
   };
 
   const handleRemoveActivity = (index: number) => {
@@ -45,24 +77,18 @@ export function JourneyDataForm({ initialData, onFormChange }: JourneyDataFormPr
     updateActivities(newActivities);
   };
 
-  const handleActivityChange = (index: number, field: keyof ActivityWithLevel, value: string) => {
+  const handleActivityChange = (index: number, field: keyof ActivityWithLevel, value: string | number) => {
     const newActivities = activities.map((activity, i) => {
       if (i === index) {
         return {
           ...activity,
-          [field]: value
+          [field]: field === 'level' ? Number(value) : value
         };
       }
       return activity;
     });
     updateActivities(newActivities);
   };
-
-  const difficultyLevels = [
-    { value: 'beginner', label: 'Początkujący' },
-    { value: 'intermediate', label: 'Średniozaawansowany' },
-    { value: 'advanced', label: 'Zaawansowany' }
-  ];
 
   return (
     <div className="space-y-4">
@@ -129,22 +155,15 @@ export function JourneyDataForm({ initialData, onFormChange }: JourneyDataFormPr
                   placeholder="Enter activity"
                 />
               </div>
-              <div className="w-48">
-                <Select
+              <div className="w-32">
+                <Input
+                  type="number"
+                  min="1"
+                  max="5"
                   value={activity.level}
-                  onValueChange={(value) => handleActivityChange(index, 'level', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {difficultyLevels.map(level => (
-                      <SelectItem key={level.value} value={level.value}>
-                        {level.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => handleActivityChange(index, 'level', e.target.value)}
+                  placeholder="Level 1-5"
+                />
               </div>
               <button
                 type="button"
@@ -156,8 +175,11 @@ export function JourneyDataForm({ initialData, onFormChange }: JourneyDataFormPr
               </button>
             </div>
           ))}
-          {activities.length === 0 && (
+          {activities.length === 0 && !isLoadingPreferences && (
             <p className="text-sm text-muted-foreground">No activities added. Click "Add Activity" to start.</p>
+          )}
+          {isLoadingPreferences && (
+            <p className="text-sm text-muted-foreground">Loading your activity preferences...</p>
           )}
         </div>
       </div>

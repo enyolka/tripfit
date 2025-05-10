@@ -33,17 +33,21 @@ Your task is to create a detailed, personalized travel plan that matches the use
 Your response should be well-structured and consider:
 - The destination's unique features and attractions
 - The specified time frame
-- The requested activities and their difficulty levels
+- The requested activities and their skill levels (rated from 1 to 5, where 1 is beginner and 5 is expert)
 - Local climate and seasonal considerations
 - Practical logistics and travel tips`;
+
+    const activitiesString = journey.activities ? 
+      `Aktywności i poziomy zaawansowania:\n${journey.activities}` : 
+      'No specific activities mentioned';
 
     const userPrompt = `Please create a detailed travel plan for:
 Destination: ${journey.destination}
 Duration: From ${journey.departure_date} to ${journey.return_date}
-Activities: ${journey.activities || 'No specific activities mentioned'}
+Activities: ${activitiesString}
 Additional Notes: ${journey.additional_notes.join(', ')}
 
-For each activity, consider the skill level requirements and provide appropriate recommendations.
+For each activity, provide recommendations appropriate for the specified skill level (1-5 scale).
 Include daily itineraries, suggested accommodations, and local transportation tips. 
 Result write in polish, and use simple formatting for easy readability and icons to highlight main points.`;
 
