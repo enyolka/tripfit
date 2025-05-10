@@ -127,7 +127,7 @@ Przykładowe scenariusze (szczegółowe przypadki testowe zostaną opracowane od
     *   Vitest (dla testów jednostkowych i integracyjnych JavaScript/TypeScript)
     *   React Testing Library (dla testowania komponentów React)
 *   **Narzędzia E2E:**
-    *   Playwright (preferowane) lub Cypress
+    *   Playwright
 *   **Testowanie API:**
     *   Postman (manualne i eksploracyjne)
     *   Newman (automatyzacja testów API w CI/CD)

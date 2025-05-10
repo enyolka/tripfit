@@ -26,6 +26,12 @@ TripFit is a web application designed to simplify travel planning by integrating
 - **AI Integration:**
   - Openrouter.ai for accessing models (OpenAI, Anthropic, Google, etc.)
 
+- **Testing:**
+  - Vitest for unit and integration tests
+  - React Testing Library for component testing
+  - Playwright for end-to-end (E2E) tests
+  - MSW (Mock Service Worker) for API mocking in tests
+
 - **CI/CD & Hosting:**
   - GitHub Actions for continuous integration and deployment
   - DigitalOcean for hosting via Docker
