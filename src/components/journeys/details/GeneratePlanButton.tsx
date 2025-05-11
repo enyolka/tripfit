@@ -14,7 +14,6 @@ export function GeneratePlanButton({ onGeneratePlan, isLoading }: GeneratePlanBu
       console.error('Failed to generate plan:', error);
     }
   };
-
   return (
     <Button
       onClick={handleClick}
@@ -22,6 +21,7 @@ export function GeneratePlanButton({ onGeneratePlan, isLoading }: GeneratePlanBu
       size="lg"
       className="w-full"
       aria-busy={isLoading}
+      aria-disabled={isLoading}
       aria-live="polite"
     >
       {isLoading ? (
