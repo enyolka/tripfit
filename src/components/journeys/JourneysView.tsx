@@ -79,7 +79,7 @@ export default function JourneysView() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">Your Journeys</h1>
-                <Button onClick={() => setNewJourneyModalOpen(true)}>
+                <Button data-testid="create-journey-button" onClick={() => setNewJourneyModalOpen(true)}>
                     <PlusIcon className="w-4 h-4 mr-2" />
                     New Journey
                 </Button>
@@ -102,8 +102,8 @@ export default function JourneysView() {
                 </Card>
             ) : (
                 <>
-                    <FilterControls onFilterChange={handleFilterChange} />
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <FilterControls onFilterChange={handleFilterChange} />{" "}
+                    <div data-testid="journeys-grid" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {journeys.map((journey) => (
                             <JourneyItem key={journey.id} journey={journey} onDelete={handleDeleteClick} />
                         ))}
@@ -112,7 +112,7 @@ export default function JourneysView() {
             )}
 
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogContent>
+                <DialogContent data-testid="delete-confirmation-dialog">
                     <DialogHeader>
                         <DialogTitle>Delete Journey</DialogTitle>
                         <DialogDescription>
@@ -120,10 +120,18 @@ export default function JourneysView() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end space-x-2 mt-4">
-                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                        <Button 
+                            data-testid="cancel-delete-button" 
+                            variant="outline" 
+                            onClick={() => setDeleteDialogOpen(false)}
+                        >
                             Cancel
                         </Button>
-                        <Button variant="destructive" onClick={handleDeleteConfirm}>
+                        <Button 
+                            data-testid="confirm-delete-button"
+                            variant="destructive" 
+                            onClick={handleDeleteConfirm}
+                        >
                             Delete
                         </Button>
                     </div>

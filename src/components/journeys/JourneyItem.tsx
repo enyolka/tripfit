@@ -1,6 +1,6 @@
-import { Button } from '../ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
-import type { JourneyDTO } from '../../types';
+import { Button } from "../ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import type { JourneyDTO } from "../../types";
 
 interface JourneyItemProps {
     journey: JourneyDTO;
@@ -9,26 +9,22 @@ interface JourneyItemProps {
 
 export function JourneyItem({ journey, onDelete }: JourneyItemProps) {
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
+        return new Date(dateString).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
         });
     };
-
     return (
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow" data-testid={`journey-item-${journey.id}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-semibold">
-                    <a 
-                        href={`/journeys/${journey.id}`}
-                        className="hover:text-primary transition-colors"
-                    >
+                    <a href={`/journeys/${journey.id}`} className="hover:text-primary transition-colors">
                         {journey.destination}
                     </a>
                 </CardTitle>
-                <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     size="sm"
                     onClick={(e) => {
                         e.preventDefault();
