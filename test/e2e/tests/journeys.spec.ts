@@ -1,25 +1,46 @@
-import { test, expect } from '@playwright/test';
-import { JourneysPage } from '../page-objects/JourneysPage';
-import type { JourneyData } from '../page-objects/NewJourneyModal';
+import { test, expect } from "@playwright/test";
+import { JourneysPage } from "../page-objects/JourneysPage";
+import type { JourneyData } from "../page-objects/NewJourneyModal";
+import { ensureAuthenticated } from "../helpers/auth.helper";
+import { AuthHelper } from "../models/AuthHelper";
 
-test.describe('Journey Management', () => {
+test.describe("Journey Management", () => {
     let journeysPage: JourneysPage;
-
+    let auth: AuthHelper;
     test.beforeEach(async ({ page }) => {
         journeysPage = new JourneysPage(page);
+        auth = new AuthHelper(page);
+
+        // Ensure user is authenticated before navigating to journeys
+        await ensureAuthenticated(page);
+
+        // Navigate to journeys page
         await journeysPage.navigateToJourneys();
+
+        // Wait for the journeys page to be ready
+        await journeysPage.waitForReady();
     });
 
-    test('should create a new journey', async () => {
+    test.afterEach(async ({ context }) => {
+        // Clear context after each test
+        await context.clearCookies();
+
+        // Attempt to logout if still logged in
+        if (auth && (await auth.isLoggedIn())) {
+            await auth.logout();
+        }
+    });
+
+    test("should create a new journey", async ({ page }) => {
         // Arrange
         const newJourney: JourneyData = {
-            destination: 'Paris',
-            departureDate: '2025-06-15',
-            returnDate: '2025-06-22',
+            destination: "Paris",
+            departureDate: "2025-06-15",
+            returnDate: "2025-06-22",
             activities: [
-                { name: 'Sightseeing', level: 2 },
-                { name: 'Museums', level: 3 }
-            ]
+                { name: "Sightseeing", level: 2 },
+                { name: "Museums", level: 3 },
+            ],
         };
 
         // Act
@@ -29,11 +50,15 @@ test.describe('Journey Management', () => {
         await modal.waitForModalClose();
 
         // Assert
-        const journeysList = await journeysPage.getJourneysList();
-        await expect(journeysList).toContainText(newJourney.destination);
+        await page.waitForSelector('[data-testid^="journey-item-"]');
+
+        // Check if any of the journey items contain the expected destination
+        const journeyTexts = await page.locator('[data-testid^="journey-item-"]').allTextContents();
+        const hasDestination = journeyTexts.some((text) => text.includes(newJourney.destination));
+        expect(hasDestination).toBe(true);
     });
 
-    test('should cancel journey creation', async () => {
+    test("should cancel journey creation", async () => {
         // Arrange
         const initialJourneysEmpty = await journeysPage.isJourneysGridEmpty();
 
