@@ -62,11 +62,9 @@ export default function JourneysView() {
                 </div>
             </div>
         );
-    }
-
-    if (error) {
+    }    if (error) {
         return (
-            <div className="text-center text-red-500 p-4">
+            <div data-testid="error-message" className="text-center text-red-500 p-4">
                 <p>{error}</p>
                 <Button variant="outline" onClick={() => fetchJourneys()} className="mt-4">
                     Retry
