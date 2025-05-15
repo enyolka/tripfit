@@ -1,5 +1,5 @@
 import { type Page } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { BasePage } from './core/BasePage';
 
 export interface JourneyData {
     destination: string;
@@ -12,6 +12,11 @@ export interface JourneyData {
 }
 
 export class NewJourneyModal extends BasePage {
+    /**
+     * Creates a new NewJourneyModal instance
+     * 
+     * @param page - Playwright page object
+     */
     constructor(page: Page) {
         super(page);
     }
@@ -19,29 +24,29 @@ export class NewJourneyModal extends BasePage {
     /**
      * Waits for modal to be visible and ready
      */
-    async waitForModal() {
-        await this.page.getByTestId('new-journey-modal').waitFor({ state: 'visible' });
-        await this.page.getByTestId('destination-input').waitFor({ state: 'visible' });
-        await this.page.getByTestId('departure-date-input').waitFor({ state: 'visible' });
-        await this.page.getByTestId('return-date-input').waitFor({ state: 'visible' });
-        await this.page.getByTestId('submit-journey-button').waitFor({ state: 'visible' });
+    async waitForModal(): Promise<void> {
+        await this.getByTestId('new-journey-modal').waitFor({ state: 'visible' });
+        await this.getByTestId('destination-input').waitFor({ state: 'visible' });
+        await this.getByTestId('departure-date-input').waitFor({ state: 'visible' });
+        await this.getByTestId('return-date-input').waitFor({ state: 'visible' });
+        await this.getByTestId('submit-journey-button').waitFor({ state: 'visible' });
     }
 
     /**
      * Fills form with journey data
+     * 
+     * @param data - Journey data to fill into the form
      */
-    async fillJourneyForm(data: JourneyData) {
-        await this.page.getByTestId('destination-input').fill(data.destination);
-        await this.page.getByTestId('departure-date-input').fill(data.departureDate);
-        await this.page.getByTestId('return-date-input').fill(data.returnDate);
-
-        if (data.activities && data.activities.length > 0) {
+    async fillJourneyForm(data: JourneyData): Promise<void> {
+        await this.getByTestId('destination-input').fill(data.destination);
+        await this.getByTestId('departure-date-input').fill(data.departureDate);
+        await this.getByTestId('return-date-input').fill(data.returnDate);        if (data.activities && data.activities.length > 0) {
             for (const [index, activity] of data.activities.entries()) {
                 if (index > 0) {
                     await this.addActivity();
                 }
-                await this.page.getByTestId(`activity-name-input-${index}`).fill(activity.name);
-                await this.page.getByTestId(`activity-level-input-${index}`).fill(activity.level.toString());
+                await this.getByTestId(`activity-name-input-${index}`).fill(activity.name);
+                await this.getByTestId(`activity-level-input-${index}`).fill(activity.level.toString());
             }
         }
     }
@@ -49,8 +54,8 @@ export class NewJourneyModal extends BasePage {
     /**
      * Submits the journey form
      */
-    async submitJourney() {
-        const submitButton = this.page.getByTestId('submit-journey-button');
+    async submitJourney(): Promise<void> {
+        const submitButton = this.getByTestId('submit-journey-button');
         await submitButton.waitFor({ state: 'visible' });
         await submitButton.click();
     }
@@ -58,8 +63,8 @@ export class NewJourneyModal extends BasePage {
     /**
      * Cancels journey creation
      */
-    async cancel() {
-        const cancelButton = this.page.getByTestId('cancel-button');
+    async cancel(): Promise<void> {
+        const cancelButton = this.getByTestId('cancel-button');
         await cancelButton.waitFor({ state: 'visible' });
         await cancelButton.click();
     }
@@ -67,17 +72,19 @@ export class NewJourneyModal extends BasePage {
     /**
      * Adds a new activity
      */
-    async addActivity() {
-        const addButton = this.page.getByTestId('add-activity-button');
+    async addActivity(): Promise<void> {
+        const addButton = this.getByTestId('add-activity-button');
         await addButton.waitFor({ state: 'visible' });
         await addButton.click();
     }
 
     /**
      * Removes an activity
+     * 
+     * @param index - Index of the activity to remove
      */
-    async removeActivity(index: number) {
-        const removeButton = this.page.getByTestId(`remove-activity-button-${index}`);
+    async removeActivity(index: number): Promise<void> {
+        const removeButton = this.getByTestId(`remove-activity-button-${index}`);
         await removeButton.waitFor({ state: 'visible' });
         await removeButton.click();
     }
@@ -85,8 +92,8 @@ export class NewJourneyModal extends BasePage {
     /**
      * Checks if submit is enabled
      */
-    async isSubmitEnabled() {
-        const submitButton = this.page.getByTestId('submit-journey-button');
+    async isSubmitEnabled(): Promise<boolean> {
+        const submitButton = this.getByTestId('submit-journey-button');
         await submitButton.waitFor({ state: 'visible' });
         return submitButton.isEnabled();
     }
@@ -94,8 +101,8 @@ export class NewJourneyModal extends BasePage {
     /**
      * Waits for modal to close
      */
-    async waitForModalClose() {
-        await this.page.getByTestId('new-journey-modal').waitFor({ state: 'hidden' });
+    async waitForModalClose(): Promise<void> {
+        await this.getByTestId('new-journey-modal').waitFor({ state: 'hidden' });
     }
 
     /**
