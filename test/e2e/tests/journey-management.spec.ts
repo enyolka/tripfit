@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { JourneysPage } from "../page-objects/JourneysPage";
 import type { JourneyData, NewJourneyModal } from "../page-objects/NewJourneyModal";
 import { ensureAuthenticated } from "../helpers/auth.helper";
-import { AuthHelper } from "../models/AuthHelper";
+import { AuthHelper } from "../page-objects/auth/AuthHelper";
 
 test.describe("Journey Management", () => {
     let journeysPage: JourneysPage;
@@ -50,11 +50,8 @@ test.describe("Journey Management", () => {
     test.afterEach(async ({ context }) => {
         // Clean up browser context
         await context.clearCookies();
-
-        // Attempt to logout if still logged in
-        if (auth && (await auth.isLoggedIn())) {
-            await auth.logout();
-        }
+        
+        // No need to logout, as each test gets a new browser context
     });
 
     test("should create a new journey with detailed steps", async ({ page }) => {

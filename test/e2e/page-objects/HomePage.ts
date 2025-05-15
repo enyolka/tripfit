@@ -1,5 +1,5 @@
 import type { Page, Locator } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { BasePage } from './core/BasePage';
 
 /**
  * HomePage Page Object Model class
@@ -24,7 +24,7 @@ export class HomePage extends BasePage {
    * Navigate to the home page
    */
   async goto(): Promise<void> {
-    await this.navigate('');
+    await this.navigateTo('');
   }
 
   /**

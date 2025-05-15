@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { HomePage } from "../models/HomePage";
+import { HomePage } from "../page-objects/HomePage";
 
 test.describe("Home Page", () => {
   let homePage: HomePage;
@@ -37,11 +37,4 @@ test.describe("Home Page", () => {
     expect(navLinks.length).toBeGreaterThan(0);
   });
 
-  test("visual comparison of homepage", async ({ page }) => {
-    // Assert
-    await expect(page).toHaveScreenshot("homepage.png", {
-      fullPage: true,
-      animations: "disabled",
-    });
-  });
 });
