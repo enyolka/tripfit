@@ -105,12 +105,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
       - name: Create status comment
         uses: actions/github-script@v7
         with:
           script: |
-            const { context } = require('@actions/github');
+            // The context object is already available in the github-script action
+            // No need to require it again
             const jobStatus = context.job.status;
             
             // Get workflow run details
