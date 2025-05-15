@@ -1,14 +1,14 @@
-import '@testing-library/jest-dom';
-import { expect, afterEach, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
+import "@testing-library/jest-dom";
+import { expect, afterEach, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+import * as matchers from "@testing-library/jest-dom/matchers";
 
 // Extend Vitest's expect with testing-library matchers
 expect.extend(matchers);
 
 // Automatically clean up after each test
 afterEach(() => {
-  cleanup();
+    cleanup();
 });
 
 // Global mock setup can be added here
@@ -19,10 +19,10 @@ afterEach(() => {
 // global.fetch = vi.fn();
 
 // Setting up locals.supabase mock
-vi.mock('astro', () => {
-  return {
-    locals: {
-      supabase: {}
-    }
-  };
+vi.mock("astro", () => {
+    return {
+        locals: {
+            supabase: {},
+        },
+    };
 });

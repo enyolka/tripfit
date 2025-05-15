@@ -2,11 +2,9 @@ import { test, expect } from "@playwright/test";
 import { JourneysPage } from "../page-objects/JourneysPage";
 import type { JourneyData, NewJourneyModal } from "../page-objects/NewJourneyModal";
 import { ensureAuthenticated } from "../helpers/auth.helper";
-import { AuthHelper } from "../page-objects/auth/AuthHelper";
 
 test.describe("Journey Management", () => {
     let journeysPage: JourneysPage;
-    let auth: AuthHelper;
 
     // Test data - journey examples for reuse
     const barcelonaJourney: JourneyData = {
@@ -20,21 +18,10 @@ test.describe("Journey Management", () => {
         ],
     };
 
-    const parisJourney: JourneyData = {
-        destination: "Paris",
-        departureDate: "2025-06-15",
-        returnDate: "2025-06-22",
-        activities: [
-            { name: "Sightseeing", level: 2 },
-            { name: "Museums", level: 3 },
-        ],
-    };
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
         // Arrange - initialize page objects
         journeysPage = new JourneysPage(page);
-        auth = new AuthHelper(page);
 
         // Ensure user is authenticated
         await ensureAuthenticated(page);
@@ -50,7 +37,7 @@ test.describe("Journey Management", () => {
     test.afterEach(async ({ context }) => {
         // Clean up browser context
         await context.clearCookies();
-        
+
         // No need to logout, as each test gets a new browser context
     });
 
@@ -74,14 +61,16 @@ test.describe("Journey Management", () => {
 
         // Assert - verify journey appears in list
         await test.step("Verify journey appears in list", async () => {
-            await page.getByTestId(/^journey-item-/).first().waitFor();
-            
+            await page
+                .getByTestId(/^journey-item-/)
+                .first()
+                .waitFor();
+
             const journeyTexts = await page.getByTestId(/^journey-item-/).allTextContents();
-            const hasDestination = journeyTexts.some(text => text.includes(barcelonaJourney.destination));
+            const hasDestination = journeyTexts.some((text) => text.includes(barcelonaJourney.destination));
             expect(hasDestination).toBe(true);
         });
     });
-
 
     test("should cancel journey creation", async () => {
         // Arrange
@@ -104,7 +93,7 @@ test.describe("Journey Management", () => {
         // Act - submit empty form
         await test.step("Submit empty form", async () => {
             await modal.submitJourney();
-            
+
             // Assert
             // Check inputs are still visible
             await expect(page.getByTestId("destination-input")).toBeVisible();
@@ -112,10 +101,8 @@ test.describe("Journey Management", () => {
             await expect(page.getByTestId("return-date-input")).toBeVisible();
 
             // Check for validation errors
-            const errorCount = await page
-                .getByTestId(/error|warning|validation/)
-                .count();
-            
+            const errorCount = await page.getByTestId(/error|warning|validation/).count();
+
             // If no specific test IDs for errors, fall back to classes
             if (errorCount === 0) {
                 const classErrorCount = await page
@@ -143,7 +130,7 @@ test.describe("Journey Management", () => {
         // Act
         await modal.fillJourneyForm(barcelonaJourney);
         await modal.submitJourney();
-        
+
         // Assert
         await expect(page.getByTestId("error-message")).toBeVisible({ timeout: 10000 });
         await expect(page.getByTestId("error-message")).toContainText(/failed|error/i);
@@ -153,13 +140,16 @@ test.describe("Journey Management", () => {
     test("should manage activities dynamically", async ({ page }) => {
         // Arrange
         const modal = await journeysPage.openNewJourneyModal();
-        
+
         await test.step("Add and remove activities", async () => {
             // Wait for activity inputs to be available
-            await page.getByTestId(/^activity-name-input-/).first().waitFor({
-                state: "attached",
-                timeout: 5000,
-            });
+            await page
+                .getByTestId(/^activity-name-input-/)
+                .first()
+                .waitFor({
+                    state: "attached",
+                    timeout: 5000,
+                });
 
             // Get initial count of activities
             const initialCount = await page.getByTestId(/^activity-name-input-/).count();

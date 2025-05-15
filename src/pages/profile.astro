@@ -9,13 +9,13 @@ export const prerender = false;
 // Przekierowanie na stronę logowania jeśli użytkownik nie jest zalogowany
 const user = Astro.locals.user as User | null;
 if (!user) {
-  return Astro.redirect("/login");
+    return Astro.redirect("/login");
 }
 ---
 
 <Layout title="Profil użytkownika">
-  <main class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Twój profil</h1>
-    <ProfilePage client:load />
-  </main>
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Twój profil</h1>
+        <ProfilePage client:load />
+    </main>
 </Layout>

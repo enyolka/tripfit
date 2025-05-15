@@ -62,7 +62,8 @@ export default function JourneysView() {
                 </div>
             </div>
         );
-    }    if (error) {
+    }
+    if (error) {
         return (
             <div data-testid="error-message" className="text-center text-red-500 p-4">
                 <p>{error}</p>
@@ -90,7 +91,7 @@ export default function JourneysView() {
                         <h2 className="text-2xl font-semibold mb-2">Plan Your First Journey</h2>
                         <p className="text-muted-foreground mb-6 max-w-md">
                             Start your adventure by creating your first journey. Add destinations, dates, and activities
-                            - we'll help you plan the perfect trip!
+                            - we&apos;ll help you plan the perfect trip!
                         </p>
                         <Button size="lg" onClick={() => setNewJourneyModalOpen(true)}>
                             <PlusIcon className="w-4 h-4 mr-2" />
@@ -118,18 +119,14 @@ export default function JourneysView() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end space-x-2 mt-4">
-                        <Button 
-                            data-testid="cancel-delete-button" 
-                            variant="outline" 
+                        <Button
+                            data-testid="cancel-delete-button"
+                            variant="outline"
                             onClick={() => setDeleteDialogOpen(false)}
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            data-testid="confirm-delete-button"
-                            variant="destructive" 
-                            onClick={handleDeleteConfirm}
-                        >
+                        <Button data-testid="confirm-delete-button" variant="destructive" onClick={handleDeleteConfirm}>
                             Delete
                         </Button>
                     </div>

@@ -7,16 +7,16 @@ export const prerender = false;
 
 // Get journey ID from URL params
 const { id } = Astro.params;
-const journeyId = parseInt(id || '', 10);
+const journeyId = parseInt(id || "", 10);
 
 // Validate journeyId
 if (isNaN(journeyId)) {
-  return new Response('Invalid journey ID', { status: 400 });
+    return new Response("Invalid journey ID", { status: 400 });
 }
 ---
 
 <Layout title="Journey Details">
-  <main class="container mx-auto px-4 py-8">
-    <JourneyDetailsView client:load journeyId={journeyId} />
-  </main>
+    <main class="container mx-auto px-4 py-8">
+        <JourneyDetailsView client:load journeyId={journeyId} />
+    </main>
 </Layout>

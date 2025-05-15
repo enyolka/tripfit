@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useState } from "react";
+import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface FilterControlsProps {
-    onFilterChange: (searchQuery: string, sortBy: 'date' | 'status' | 'name') => void;
+    onFilterChange: (searchQuery: string, sortBy: "date" | "status" | "name") => void;
 }
 
 export function FilterControls({ onFilterChange }: FilterControlsProps) {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [sortBy, setSortBy] = useState<'date' | 'status' | 'name'>('date');
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState<"date" | "status" | "name">("date");
 
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
         onFilterChange(value, sortBy);
     };
 
-    const handleSortChange = (value: 'date' | 'status' | 'name') => {
+    const handleSortChange = (value: "date" | "status" | "name") => {
         setSortBy(value);
         onFilterChange(searchQuery, value);
     };

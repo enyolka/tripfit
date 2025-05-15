@@ -1,11 +1,11 @@
 ---
-import { Navigation } from '../components/Navigation';
+import { Navigation } from "../components/Navigation";
 import { Toaster } from "@/components/ui/sonner";
-import '../styles/global.css';
-import { createSupabaseServerInstance } from '../db/supabase.client';
+import "../styles/global.css";
+import { createSupabaseServerInstance } from "../db/supabase.client";
 
 interface Props {
-  title: string;
+    title: string;
 }
 
 const { title } = Astro.props;
@@ -13,30 +13,32 @@ const { cookies } = Astro;
 
 // Check if user is already logged in
 const supabase = createSupabaseServerInstance({ cookies, headers: Astro.request.headers });
-const { data: { user } } = await supabase.auth.getUser();
+const {
+    data: { user },
+} = await supabase.auth.getUser();
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title} - TripFit</title>
-  </head>
-  <body>
-    <Navigation isLoggedIn={!!user} client:load />
-    <slot />
-    <Toaster richColors closeButton client:load />
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <meta name="generator" content={Astro.generator} />
+        <title>{title} - TripFit</title>
+    </head>
+    <body>
+        <Navigation isLoggedIn={!!user} client:load />
+        <slot />
+        <Toaster richColors closeButton client:load />
+    </body>
 </html>
 
 <style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-  }
+    html,
+    body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+    }
 </style>

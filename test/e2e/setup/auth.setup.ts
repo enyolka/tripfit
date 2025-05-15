@@ -1,8 +1,8 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 async function globalSetup() {
     // Load test env vars
-    dotenv.config({ path: '.env.test' });
+    dotenv.config({ path: ".env.test" });
 }
 
 export default globalSetup;

@@ -9,10 +9,10 @@ export type ProfileDTO = Database["public"]["Tables"]["profiles"]["Row"];
  * Command model for updating a profile.
  * Expects the client's updated preferences and level.
  */
-export type UpdateProfileCommand = {
-  preferences: Json;
-  level: number;
-};
+export interface UpdateProfileCommand {
+    preferences: Json;
+    level: number;
+}
 
 /**
  * Journey DTO based on the journeys table.
@@ -24,8 +24,8 @@ export type JourneyDTO = Database["public"]["Tables"]["journeys"]["Row"];
  * Excludes auto-generated and system-managed fields.
  */
 export type CreateJourneyCommand = Omit<
-  Database["public"]["Tables"]["journeys"]["Insert"],
-  "id" | "created_at" | "updated_at" | "user_id"
+    Database["public"]["Tables"]["journeys"]["Insert"],
+    "id" | "created_at" | "updated_at" | "user_id"
 >;
 
 /**
@@ -33,7 +33,7 @@ export type CreateJourneyCommand = Omit<
  * Allows partial update of journey fields.
  */
 export type UpdateJourneyCommand = Partial<
-  Omit<Database["public"]["Tables"]["journeys"]["Update"], "id" | "created_at" | "updated_at" | "user_id">
+    Omit<Database["public"]["Tables"]["journeys"]["Update"], "id" | "created_at" | "updated_at" | "user_id">
 >;
 
 /**
@@ -51,18 +51,18 @@ export type GenerationDTO = Database["public"]["Tables"]["generations"]["Row"];
  * Represents input to generate a travel plan,
  * including optional plan preferences.
  */
-export type CreateGenerationCommand = {
-  plan_preferences?: Json;
-};
+export interface CreateGenerationCommand {
+    plan_preferences?: Json;
+}
 
 /**
  * Command model for updating an existing generation.
  * Allows updating the edited text and setting a new status.
  */
-export type UpdateGenerationCommand = {
-  edited_text?: string | null;
-  status: GenerationStatus;
-};
+export interface UpdateGenerationCommand {
+    edited_text?: string | null;
+    status: GenerationStatus;
+}
 
 /**
  * Generation Error Log DTO based on the generation_error_logs table.

@@ -154,7 +154,7 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
 
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                            <label className="text-sm font-medium">Activities</label>{" "}
+                            <h4 className="text-sm font-medium">Activities</h4>
                             <button
                                 type="button"
                                 data-testid="add-activity-button"
@@ -199,7 +199,7 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
                             ))}
                             {activities.length === 0 && !isLoadingPreferences && (
                                 <p className="text-sm text-muted-foreground">
-                                    No activities added. Click "Add Activity" to start.
+                                    No activities added. Click &quot;Add Activity&quot; to start.
                                 </p>
                             )}
                             {isLoadingPreferences && (

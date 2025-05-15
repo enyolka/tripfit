@@ -2,9 +2,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import JourneysView from "../../../../src/components/journeys/JourneysView";
 import { useJourneys } from "../../../../src/components/hooks/useJourneys";
-import type { JourneyDTO, CreateJourneyCommand } from "../../../../src/types";
-import React from "react";
-import { FilterControls } from "@/components/journeys/FilterControls";
+import type { JourneyDTO } from "../../../../src/types";
 
 // Mock the useJourneys hook
 vi.mock("../../../../src/components/hooks/useJourneys", () => ({
@@ -338,7 +336,6 @@ describe("JourneysView", () => {
     });
 
     describe("Filtering and Sorting", () => {
-
         beforeEach(() => {
             mockJourneysHook.journeys = mockJourneys;
         });
@@ -365,7 +362,7 @@ describe("JourneysView", () => {
             // Check that filterJourneys was called with correct params
             expect(mockJourneysHook.filterJourneys).toHaveBeenCalledWith("", "name");
         });
-        
+
         it("should combine search and sort filters", () => {
             render(<JourneysView />);
 
