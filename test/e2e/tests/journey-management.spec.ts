@@ -4,11 +4,12 @@ import type { JourneyData } from "../page-objects/NewJourneyModal";
 import { ensureAuthenticated } from "../helpers/auth.helper";
 import { AuthHelper } from "../models/AuthHelper";
 
-test.describe("Create Journey", () => {
+test.describe("Journey Management", () => {
     let journeysPage: JourneysPage;
     let auth: AuthHelper;
 
-    const newJourney: JourneyData = {
+    // Standard journey data for reuse
+    const barcelonaJourney: JourneyData = {
         destination: "Barcelona",
         departureDate: "2025-06-15",
         returnDate: "2025-06-22",
@@ -19,31 +20,41 @@ test.describe("Create Journey", () => {
         ],
     };
 
+    const parisJourney: JourneyData = {
+        destination: "Paris",
+        departureDate: "2025-06-15",
+        returnDate: "2025-06-22",
+        activities: [
+            { name: "Sightseeing", level: 2 },
+            { name: "Museums", level: 3 },
+        ],
+    };
+
     test.beforeEach(async ({ page }) => {
-        // Create page objects
         journeysPage = new JourneysPage(page);
         auth = new AuthHelper(page);
 
         // Ensure user is authenticated
         await ensureAuthenticated(page);
 
-        // Wait for the journey page to be ready
-        await page.waitForSelector('button[data-testid="create-journey-button"]', {
-            state: "visible",
-            timeout: 5000,
-        });
+        // Navigate to journeys page
+        await journeysPage.navigateToJourneys();
+
+        // Wait for the journeys page to be ready
+        await journeysPage.waitForReady();
     });
 
     test.afterEach(async ({ context }) => {
         // Clear context after each test
         await context.clearCookies();
+
         // Attempt to logout if still logged in
         if (auth && (await auth.isLoggedIn())) {
             await auth.logout();
         }
     });
 
-    test("should create a new journey and display it on the list", async ({ page }) => {
+    test("should create a new journey with detailed steps", async ({ page }) => {
         const modal = await test.step("Open new journey modal", async () => {
             const modal = await journeysPage.openNewJourneyModal();
             await expect(page.getByTestId("new-journey-modal")).toBeVisible();
@@ -51,7 +62,7 @@ test.describe("Create Journey", () => {
         });
 
         await test.step("Fill journey form", async () => {
-            await modal.fillJourneyForm(newJourney);
+            await modal.fillJourneyForm(barcelonaJourney);
         });
 
         await test.step("Submit journey form", async () => {
@@ -65,9 +76,40 @@ test.describe("Create Journey", () => {
 
             // Check if any of the journey items contain the expected destination
             const journeyTexts = await page.locator('[data-testid^="journey-item-"]').allTextContents();
-            const hasDestination = journeyTexts.some((text) => text.includes(newJourney.destination));
+            const hasDestination = journeyTexts.some((text) => text.includes(barcelonaJourney.destination));
             expect(hasDestination).toBe(true);
         });
+    });
+
+    test("should create a new journey (simplified)", async ({ page }) => {
+        // Arrange
+        const newJourney = parisJourney;
+
+        // Act
+        const modal = await journeysPage.openNewJourneyModal();
+        await modal.fillJourneyForm(newJourney);
+        await modal.submitJourney();
+        await modal.waitForModalClose();
+
+        // Assert
+        await page.waitForSelector('[data-testid^="journey-item-"]');
+        const journeyTexts = await page.locator('[data-testid^="journey-item-"]').allTextContents();
+        const hasDestination = journeyTexts.some((text) => text.includes(newJourney.destination));
+        expect(hasDestination).toBe(true);
+    });
+
+    test("should cancel journey creation", async () => {
+        // Arrange
+        const initialJourneysEmpty = await journeysPage.isJourneysGridEmpty();
+
+        // Act
+        const modal = await journeysPage.openNewJourneyModal();
+        await modal.cancel();
+        await modal.waitForModalClose();
+
+        // Assert
+        const stillEmpty = await journeysPage.isJourneysGridEmpty();
+        expect(stillEmpty).toBe(initialJourneysEmpty);
     });
 
     test("should validate required fields", async ({ page }) => {
@@ -75,6 +117,8 @@ test.describe("Create Journey", () => {
 
         await test.step("Submit empty form", async () => {
             await modal.submitJourney(); // Verify validation errors are visible
+            
+            // Check inputs are still visible
             await expect(page.getByTestId("destination-input")).toBeVisible();
             await expect(page.getByTestId("departure-date-input")).toBeVisible();
             await expect(page.getByTestId("return-date-input")).toBeVisible();
@@ -97,15 +141,19 @@ test.describe("Create Journey", () => {
                 body: JSON.stringify({ error: "Internal Server Error" }),
             });
         });
-        await modal.fillJourneyForm(newJourney);
+
+        await modal.fillJourneyForm(barcelonaJourney);
         await modal.submitJourney();
+        
         // Wait for and verify the error message from JourneysView is displayed
         await expect(page.getByTestId("error-message")).toBeVisible({ timeout: 10000 });
         await expect(page.getByTestId("error-message")).toContainText(/failed|error/i);
         await expect(page.locator("button", { hasText: "Retry" })).toBeVisible();
     });
+
     test("should manage activities dynamically", async ({ page }) => {
         const modal = await journeysPage.openNewJourneyModal();
+        
         await test.step("Add and remove activities", async () => {
             // Wait for modal to be fully loaded and stable
             await page.waitForTimeout(500); // Small delay to ensure modal is fully rendered
@@ -117,10 +165,7 @@ test.describe("Create Journey", () => {
             });
 
             // Make sure we have a consistent starting point - we expect at least one activity by default
-            // If no activities exist yet, wait a bit more to ensure they're loaded
-            let initialCount = await page.getByTestId(/activity-name-input-\d+/).count();
-
-            console.log(`Starting with ${initialCount} activities`);
+            const initialCount = await page.getByTestId(/activity-name-input-\d+/).count();
 
             // Add first activity
             await modal.addActivity();
