@@ -44,20 +44,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Run unit tests with coverage
-        run: npm run test:coverage
+      - name: Run unit tests
+        run: npm run test
         env:
           CI: true
-      
-      - name: Upload unit test coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: unit-test-coverage
-          path: |
-            coverage/
-            coverage/**/*
-          retention-days: 7
 
   e2e-test:
     name: E2E Tests
@@ -77,11 +67,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Setup Playwright browsers
-        uses: microsoft/playwright-github-action@v1
-      
-      - name: Install Playwright browsers
-        run: npx playwright install chromium
+      - name: Install Playwright browsers and dependencies
+        run: npx playwright install --with-deps chromium
       
       - name: Build project
         run: npm run build
