@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { JourneysPage } from "../page-objects/JourneysPage";
-import type { JourneyData } from "../page-objects/NewJourneyModal";
+import type { JourneyData, NewJourneyModal } from "../page-objects/NewJourneyModal";
 import { ensureAuthenticated } from "../helpers/auth.helper";
 import { AuthHelper } from "../models/AuthHelper";
 
@@ -8,7 +8,7 @@ test.describe("Journey Management", () => {
     let journeysPage: JourneysPage;
     let auth: AuthHelper;
 
-    // Standard journey data for reuse
+    // Test data - journey examples for reuse
     const barcelonaJourney: JourneyData = {
         destination: "Barcelona",
         departureDate: "2025-06-15",
@@ -30,7 +30,9 @@ test.describe("Journey Management", () => {
         ],
     };
 
+    // Setup before each test
     test.beforeEach(async ({ page }) => {
+        // Arrange - initialize page objects
         journeysPage = new JourneysPage(page);
         auth = new AuthHelper(page);
 
@@ -44,8 +46,9 @@ test.describe("Journey Management", () => {
         await journeysPage.waitForReady();
     });
 
+    // Cleanup after each test
     test.afterEach(async ({ context }) => {
-        // Clear context after each test
+        // Clean up browser context
         await context.clearCookies();
 
         // Attempt to logout if still logged in
@@ -55,12 +58,14 @@ test.describe("Journey Management", () => {
     });
 
     test("should create a new journey with detailed steps", async ({ page }) => {
-        const modal = await test.step("Open new journey modal", async () => {
-            const modal = await journeysPage.openNewJourneyModal();
+        // Arrange - open modal
+        let modal: NewJourneyModal;
+        await test.step("Open new journey modal", async () => {
+            modal = await journeysPage.openNewJourneyModal();
             await expect(page.getByTestId("new-journey-modal")).toBeVisible();
-            return modal;
         });
 
+        // Act - fill and submit form
         await test.step("Fill journey form", async () => {
             await modal.fillJourneyForm(barcelonaJourney);
         });
@@ -70,33 +75,16 @@ test.describe("Journey Management", () => {
             await modal.waitForModalClose();
         });
 
+        // Assert - verify journey appears in list
         await test.step("Verify journey appears in list", async () => {
-            // Wait for journey list to load
-            await page.waitForSelector('[data-testid^="journey-item-"]');
-
-            // Check if any of the journey items contain the expected destination
-            const journeyTexts = await page.locator('[data-testid^="journey-item-"]').allTextContents();
-            const hasDestination = journeyTexts.some((text) => text.includes(barcelonaJourney.destination));
+            await page.getByTestId(/^journey-item-/).first().waitFor();
+            
+            const journeyTexts = await page.getByTestId(/^journey-item-/).allTextContents();
+            const hasDestination = journeyTexts.some(text => text.includes(barcelonaJourney.destination));
             expect(hasDestination).toBe(true);
         });
     });
 
-    test("should create a new journey (simplified)", async ({ page }) => {
-        // Arrange
-        const newJourney = parisJourney;
-
-        // Act
-        const modal = await journeysPage.openNewJourneyModal();
-        await modal.fillJourneyForm(newJourney);
-        await modal.submitJourney();
-        await modal.waitForModalClose();
-
-        // Assert
-        await page.waitForSelector('[data-testid^="journey-item-"]');
-        const journeyTexts = await page.locator('[data-testid^="journey-item-"]').allTextContents();
-        const hasDestination = journeyTexts.some((text) => text.includes(newJourney.destination));
-        expect(hasDestination).toBe(true);
-    });
 
     test("should cancel journey creation", async () => {
         // Arrange
@@ -113,25 +101,38 @@ test.describe("Journey Management", () => {
     });
 
     test("should validate required fields", async ({ page }) => {
+        // Arrange
         const modal = await journeysPage.openNewJourneyModal();
 
+        // Act - submit empty form
         await test.step("Submit empty form", async () => {
-            await modal.submitJourney(); // Verify validation errors are visible
+            await modal.submitJourney();
             
+            // Assert
             // Check inputs are still visible
             await expect(page.getByTestId("destination-input")).toBeVisible();
             await expect(page.getByTestId("departure-date-input")).toBeVisible();
             await expect(page.getByTestId("return-date-input")).toBeVisible();
 
-            // Check for validation warnings - look for error messages
+            // Check for validation errors
             const errorCount = await page
-                .locator(".field-warning, .validation-message, [data-error], .text-red-500, .error-text")
+                .getByTestId(/error|warning|validation/)
                 .count();
-            expect(errorCount).toBeGreaterThan(0);
+            
+            // If no specific test IDs for errors, fall back to classes
+            if (errorCount === 0) {
+                const classErrorCount = await page
+                    .locator(".field-warning, .validation-message, [data-error], .text-red-500, .error-text")
+                    .count();
+                expect(classErrorCount).toBeGreaterThan(0);
+            } else {
+                expect(errorCount).toBeGreaterThan(0);
+            }
         });
     });
 
     test("should handle API errors gracefully", async ({ page }) => {
+        // Arrange
         const modal = await journeysPage.openNewJourneyModal();
 
         // Mock API to return error
@@ -142,45 +143,40 @@ test.describe("Journey Management", () => {
             });
         });
 
+        // Act
         await modal.fillJourneyForm(barcelonaJourney);
         await modal.submitJourney();
         
-        // Wait for and verify the error message from JourneysView is displayed
+        // Assert
         await expect(page.getByTestId("error-message")).toBeVisible({ timeout: 10000 });
         await expect(page.getByTestId("error-message")).toContainText(/failed|error/i);
-        await expect(page.locator("button", { hasText: "Retry" })).toBeVisible();
+        await expect(page.getByRole("button", { name: /retry/i })).toBeVisible();
     });
 
     test("should manage activities dynamically", async ({ page }) => {
+        // Arrange
         const modal = await journeysPage.openNewJourneyModal();
         
         await test.step("Add and remove activities", async () => {
-            // Wait for modal to be fully loaded and stable
-            await page.waitForTimeout(500); // Small delay to ensure modal is fully rendered
-
-            // Wait for activity inputs to be available in the DOM
-            await page.waitForSelector('[data-testid^="activity-name-input-"]', {
+            // Wait for activity inputs to be available
+            await page.getByTestId(/^activity-name-input-/).first().waitFor({
                 state: "attached",
                 timeout: 5000,
             });
 
-            // Make sure we have a consistent starting point - we expect at least one activity by default
-            const initialCount = await page.getByTestId(/activity-name-input-\d+/).count();
+            // Get initial count of activities
+            const initialCount = await page.getByTestId(/^activity-name-input-/).count();
 
-            // Add first activity
+            // Act - add activities
             await modal.addActivity();
-            await page.waitForTimeout(200); // Small delay to ensure state update
-            await expect(page.getByTestId(/activity-name-input-\d+/)).toHaveCount(initialCount + 1);
+            await expect(page.getByTestId(/^activity-name-input-/)).toHaveCount(initialCount + 1);
 
-            // Add second activity
             await modal.addActivity();
-            await page.waitForTimeout(200); // Small delay to ensure state update
-            await expect(page.getByTestId(/activity-name-input-\d+/)).toHaveCount(initialCount + 2);
+            await expect(page.getByTestId(/^activity-name-input-/)).toHaveCount(initialCount + 2);
 
-            // Remove first activity
+            // Act - remove activity
             await modal.removeActivity(0);
-            await page.waitForTimeout(200); // Small delay to ensure state update
-            await expect(page.getByTestId(/activity-name-input-\d+/)).toHaveCount(initialCount + 1);
+            await expect(page.getByTestId(/^activity-name-input-/)).toHaveCount(initialCount + 1);
         });
     });
 });
