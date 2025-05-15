@@ -1,4 +1,4 @@
-# TripFit
+# TripFit ✈️
 
 ## Table of Contents
 - [Project Description](#project-description)
