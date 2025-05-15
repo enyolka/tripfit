@@ -69,11 +69,12 @@ jobs:
       
       - name: Install Playwright browsers and dependencies
         run: npx playwright install --with-deps chromium
-      
       - name: Build project
         run: npm run build
         env:
           CI: true
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
       - name: Run E2E tests
         run: npm run test:e2e
