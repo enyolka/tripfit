@@ -23,7 +23,7 @@ export default function ProfilePage() {
         } catch (err) {
             const message = err instanceof Error ? err.message : "An error occurred";
             setError(message);
-            toast.error("Błąd", {
+            toast.error("Error", {
                 description: message,
             });
         } finally {
@@ -56,11 +56,11 @@ export default function ProfilePage() {
             <UserInfoForm />
             <Card>
                 <CardHeader>
-                    <CardTitle>Preferencje aktywności</CardTitle>
+                    <CardTitle>Activity Preferences</CardTitle>
                     {preferences.length === 0 && (
                         <CardDescription>
-                            Nie dodano jeszcze żadnych preferencji. Wypełnij poniższy formularz, aby określić swoje
-                            preferencje aktywności.
+                            No preferences have been added yet. Fill out the form below to set your
+                            activity preferences.
                         </CardDescription>
                     )}
                 </CardHeader>

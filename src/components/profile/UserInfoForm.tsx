@@ -6,7 +6,7 @@ export default function UserInfoForm() {
     const [user, setUser] = useState<{ email: string } | null>(null);
 
     useEffect(() => {
-        // W przyszłości można dodać pobieranie dodatkowych danych użytkownika
+        // In the future, we can add retrieval of additional user data
         const currentUser = (window as any).Astro?.user;
         if (currentUser) {
             setUser(currentUser);
@@ -20,8 +20,8 @@ export default function UserInfoForm() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Dane podstawowe</CardTitle>
-                <CardDescription>Twoje podstawowe dane użytkownika</CardDescription>
+                <CardTitle>Basic Information</CardTitle>
+                <CardDescription>Your basic user information</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid w-full items-center gap-4">

@@ -66,16 +66,16 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                 throw new Error(data.error || "Failed to create preference");
             }
 
-            toast.success("Dodano preferencję");
+            toast.success("Preference added");
             setNewPreference({ activity_name: "", level: 1 });
             onRefresh();
         } catch (err) {
             if (err instanceof Error) {
-                toast.error("Błąd", {
+                toast.error("Error", {
                     description: err.message,
                 });
             } else {
-                toast.error("Wystąpił nieoczekiwany błąd");
+                toast.error("Unexpected error occurred");
             }
         } finally {
             setIsSubmitting(false);
@@ -101,16 +101,16 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                 throw new Error(data.error || "Failed to update preference");
             }
 
-            toast.success("Zaktualizowano preferencję");
+            toast.success("Preference updated");
             setEditingId(null);
             onRefresh();
         } catch (err) {
             if (err instanceof Error) {
-                toast.error("Błąd", {
+                toast.error("Error", {
                     description: err.message,
                 });
             } else {
-                toast.error("Wystąpił nieoczekiwany błąd");
+                toast.error("An unexpected error occurred");
             }
         } finally {
             setIsSubmitting(false);
@@ -132,16 +132,16 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                 throw new Error(data.error || "Failed to delete preference");
             }
 
-            toast.success("Usunięto preferencję");
+            toast.success("Preference deleted");
             setPreferenceToDeleteId(null);
             onRefresh();
         } catch (err) {
             if (err instanceof Error) {
-                toast.error("Błąd", {
+                toast.error("Error", {
                     description: err.message,
                 });
             } else {
-                toast.error("Wystąpił nieoczekiwany błąd");
+                toast.error("An unexpected error occurred");
             }
         } finally {
             setIsSubmitting(false);
@@ -170,19 +170,19 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                         {editingId === preference.id ? (
                             <form className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor={`edit-activity-${preference.id}`}>Aktywność</Label>
+                                    <Label htmlFor={`edit-activity-${preference.id}`}>Activity</Label>
                                     <Input
                                         id={`edit-activity-${preference.id}`}
                                         value={editedPreference.activity_name}
                                         onChange={(e) =>
                                             setEditedPreference((prev) => ({ ...prev, activity_name: e.target.value }))
                                         }
-                                        placeholder="np. bieganie, pływanie, jazda na rowerze"
+                                        placeholder="e.g. running, swimming, cycling"
                                         disabled={isSubmitting}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor={`edit-level-${preference.id}`}>Poziom zaawansowania</Label>
+                                    <Label htmlFor={`edit-level-${preference.id}`}>Proficiency level</Label>
                                     <Input
                                         id={`edit-level-${preference.id}`}
                                         type="number"
@@ -205,7 +205,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                                         disabled={isSubmitting || !validateEditedPreference()}
                                     >
                                         <Check className="h-4 w-4 mr-2" />
-                                        Zapisz
+                                        Save
                                     </Button>
                                     <Button
                                         type="button"
@@ -214,7 +214,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                                         disabled={isSubmitting}
                                     >
                                         <X className="h-4 w-4 mr-2" />
-                                        Anuluj
+                                        Cancel
                                     </Button>
                                 </div>
                             </form>
@@ -223,7 +223,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                                 <div className="space-y-1">
                                     <p className="font-medium">{preference.activity_name}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        Poziom zaawansowania: {preference.level}
+                                        Proficiency level: {preference.level}
                                     </p>
                                 </div>
                                 <div className="flex gap-2">
@@ -255,25 +255,25 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
             {/* Formularz dodawania nowej preferencji */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Dodaj nową preferencję</CardTitle>
-                    <CardDescription>Określ swoją ulubioną aktywność fizyczną i poziom zaawansowania</CardDescription>
+                    <CardTitle>Add new preference</CardTitle>
+                    <CardDescription>Specify your favorite physical activity and proficiency level</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleCreate} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="new-activity">Aktywność</Label>
+                            <Label htmlFor="new-activity">Activity</Label>
                             <Input
                                 id="new-activity"
                                 value={newPreference.activity_name}
                                 onChange={(e) =>
                                     setNewPreference((prev) => ({ ...prev, activity_name: e.target.value }))
                                 }
-                                placeholder="np. bieganie, pływanie, jazda na rowerze"
+                                placeholder="e.g. running, swimming, cycling"
                                 disabled={isSubmitting || editingId !== null}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="new-level">Poziom zaawansowania (1-5)</Label>
+                            <Label htmlFor="new-level">Proficiency level (1-5)</Label>
                             <Input
                                 id="new-level"
                                 type="number"
@@ -288,7 +288,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                         </div>
                         <Button type="submit" disabled={isSubmitting || editingId !== null || !validateNewPreference()}>
                             <Plus className="h-4 w-4 mr-2" />
-                            Dodaj preferencję
+                            Add preference
                         </Button>
                     </form>
                 </CardContent>
@@ -298,17 +298,17 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
             <Dialog open={preferenceToDeleteId !== null} onOpenChange={() => setPreferenceToDeleteId(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Usuń preferencję</DialogTitle>
+                        <DialogTitle>Delete preference</DialogTitle>
                         <DialogDescription>
-                            Czy na pewno chcesz usunąć tę preferencję? Tej operacji nie można cofnąć.
+                            Are you sure you want to delete this preference? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end space-x-2 mt-4">
                         <Button variant="outline" onClick={() => setPreferenceToDeleteId(null)} disabled={isSubmitting}>
-                            Anuluj
+                            Cancel
                         </Button>
                         <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
-                            {isSubmitting ? "Usuwanie..." : "Usuń"}
+                            {isSubmitting ? "Deleting..." : "Delete"}
                         </Button>
                     </div>
                 </DialogContent>

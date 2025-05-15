@@ -37,9 +37,9 @@ export function NoteCard({ note, index, onUpdate, onDelete, isUpdating, initialI
 
     return (
         <Card className="mb-4">
-            <CardHeader className="flex flex-row items-center justify-between py-3">
-                <h4 className="text-sm font-medium">Notatka {index + 1}</h4>
-                <div className="flex gap-2">
+            <CardHeader className="flex flex-row items-center justify-between py-1">
+                <h4 className="text-sm font-medium">Note {index + 1}</h4>
+                <div className="flex gap-1">
                     {isEditing ? (
                         <>
                             <Button
