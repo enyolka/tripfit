@@ -1,5 +1,6 @@
 import { Button } from "../ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
+import { CalendarIcon, NavigationIcon, Trash2Icon } from "lucide-react";
 import type { JourneyDTO } from "../../types";
 
 interface JourneyItemProps {
@@ -16,9 +17,14 @@ export function JourneyItem({ journey, onDelete }: JourneyItemProps) {
         });
     };
     return (
-        <Card className="hover:shadow-md transition-shadow" data-testid={`journey-item-${journey.id}`}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold">
+        <Card
+            className="hover:shadow-md transition-all duration-300 bg-white dark:bg-slate-900/20"
+            data-testid={`journey-item-${journey.id}`}
+        >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-slate-100 dark:border-slate-800/20">
+                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+                    <NavigationIcon className="h-4 w-4 text-slate-400" />
+
                     <a href={`/journeys/${journey.id}`} className="hover:text-primary transition-colors">
                         {journey.destination}
                     </a>
@@ -26,6 +32,7 @@ export function JourneyItem({ journey, onDelete }: JourneyItemProps) {
                 <Button
                     variant="ghost"
                     size="sm"
+                    className="hover:bg-slate-100 hover:text-slate-600 rounded-full h-8 w-8 p-0 dark:hover:bg-slate-800/30"
                     onClick={(e) => {
                         e.preventDefault();
                         onDelete(journey.id);
@@ -50,10 +57,13 @@ export function JourneyItem({ journey, onDelete }: JourneyItemProps) {
                     </svg>
                 </Button>
             </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground">
-                    {formatDate(journey.departure_date)} - {formatDate(journey.return_date)}
-                </p>
+            <CardContent className="pt-2">
+                <div className="flex items-center text-sm text-slate-500 dark:text-slate-400 text-sm text-muted-foreground">
+                    <CalendarIcon className="h-4 w-4 mr-2 text-slate-400" />
+                    <p>
+                        {formatDate(journey.departure_date)} - {formatDate(journey.return_date)}
+                    </p>
+                </div>
             </CardContent>
         </Card>
     );
