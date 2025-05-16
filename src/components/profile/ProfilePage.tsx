@@ -53,14 +53,17 @@ export default function ProfilePage() {
 
     return (
         <div className="space-y-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-sky-600 dark:from-teal-400 dark:to-sky-400 text-transparent bg-clip-text flex items-center">
+                Your Profile
+            </h1>
             <UserInfoForm />
             <Card>
                 <CardHeader>
                     <CardTitle>Activity Preferences</CardTitle>
                     {preferences.length === 0 && (
                         <CardDescription>
-                            No preferences have been added yet. Fill out the form below to set your
-                            activity preferences.
+                            No preferences have been added yet. Fill out the form below to set your activity
+                            preferences.
                         </CardDescription>
                     )}
                 </CardHeader>

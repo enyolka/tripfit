@@ -203,6 +203,7 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                                         type="button"
                                         onClick={() => handleUpdate(preference.id)}
                                         disabled={isSubmitting || !validateEditedPreference()}
+                                        className="bg-gradient-to-r from-teal-600 to-sky-600 text-white font-medium shadow-md hover:shadow-lg"
                                     >
                                         <Check className="h-4 w-4 mr-2" />
                                         Save
@@ -286,7 +287,11 @@ export default function PreferencesForm({ preferences, onRefresh }: PreferencesF
                                 disabled={isSubmitting || editingId !== null}
                             />
                         </div>
-                        <Button type="submit" disabled={isSubmitting || editingId !== null || !validateNewPreference()}>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting || editingId !== null || !validateNewPreference()}
+                            className="bg-gradient-to-r from-teal-600 to-sky-600 text-white font-medium shadow-md hover:shadow-lg"
+                        >
                             <Plus className="h-4 w-4 mr-2" />
                             Add preference
                         </Button>

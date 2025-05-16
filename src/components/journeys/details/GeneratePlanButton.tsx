@@ -19,7 +19,7 @@ export function GeneratePlanButton({ onGeneratePlan, isLoading }: GeneratePlanBu
             onClick={handleClick}
             disabled={isLoading}
             size="lg"
-            className="w-full"
+            className="bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white shadow-md hover:shadow-lg transition-all duration-300 w-full"
             aria-busy={isLoading}
             aria-disabled={isLoading}
             aria-live="polite"

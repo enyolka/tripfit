@@ -122,7 +122,11 @@ export default function LoginForm({ redirectTo = "/journeys" }: LoginFormProps) 
                 {form.formState.errors.root && (
                     <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
                 )}
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                    type="submit"
+                    className="bg-gradient-to-r from-teal-600 to-sky-600 text-white font-medium shadow-md hover:shadow-lg w-full"
+                    disabled={isSubmitting}
+                >
                     {isSubmitting ? "Signing in..." : "Sign in"}
                 </Button>
             </form>

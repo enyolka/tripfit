@@ -24,6 +24,7 @@ export function ActionButtons({ isEditing, isSaving, canSave, onEdit, onSave, on
                     aria-label="Save changes"
                     aria-busy={isSaving}
                     aria-disabled={!canSave || isSaving}
+                    className="bg-gradient-to-r from-teal-600 to-sky-600 text-white shadow-md hover:shadow-lg"
                 >
                     {isSaving ? (
                         <>

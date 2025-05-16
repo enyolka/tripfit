@@ -103,7 +103,11 @@ export default function RecoverForm() {
                     <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
                 )}
                 <div className="flex flex-col gap-3">
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-gradient-to-r from-teal-600 to-sky-600 text-white font-medium shadow-md hover:shadow-lg w-full"
+                    >
                         {isSubmitting ? "Sending instructions..." : "Send reset instructions"}
                     </Button>
                     <Button type="button" variant="outline" asChild>

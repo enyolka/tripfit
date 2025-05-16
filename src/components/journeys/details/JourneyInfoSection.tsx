@@ -74,7 +74,7 @@ export function JourneyInfoSection({ journeyData, onUpdateJourney, isUpdating }:
         <section aria-labelledby="journey-details-heading">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle id="journey-details-heading" className="text-2xl font-bold">
+                    <CardTitle id="journey-details-heading" className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-sky-600 dark:from-teal-400 dark:to-sky-400 text-transparent bg-clip-text flex items-center">  
                         Journey Details
                     </CardTitle>
                     <ActionButtons
@@ -129,12 +129,12 @@ export function JourneyInfoSection({ journeyData, onUpdateJourney, isUpdating }:
                                             <Badge
                                                 key={index}
                                                 variant="secondary"
-                                                className="bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-800/20 dark:text-blue-200 dark:hover:bg-blue-800/30 transition-colors"
+                                                className="bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-blue-800/20 dark:text-blue-200 dark:hover:bg-blue-800/30 transition-colors"
                                             >
                                                 {activity.name} (Level {activity.level})
                                             </Badge>
                                         ))}
-                                    </div>
+                                    </div> 
                                 ) : (
                                     <p className="text-sm text-muted-foreground mt-1">
                                         There are no activities added yet.

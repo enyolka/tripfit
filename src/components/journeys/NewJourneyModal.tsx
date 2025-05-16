@@ -209,11 +209,15 @@ export function NewJourneyModal({ isOpen, onClose, onSubmit }: NewJourneyModalPr
                     </div>
 
                     <div className="flex justify-end space-x-2 mt-4">
-                        {" "}
                         <Button type="button" variant="outline" onClick={onClose} data-testid="cancel-button">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} data-testid="submit-journey-button">
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            data-testid="submit-journey-button"
+                            className="bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                        >
                             Create Journey
                         </Button>
                     </div>

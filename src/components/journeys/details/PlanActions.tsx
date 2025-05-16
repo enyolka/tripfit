@@ -25,6 +25,7 @@ export function PlanActions({ isEditing, isSaving, canSave, onEdit, onSave, onCa
                     aria-label="Save plan"
                     aria-busy={isSaving}
                     aria-disabled={!canSave || isSaving}
+                    className="bg-gradient-to-r from-teal-600 to-sky-600 text-white shadow-md hover:shadow-lg"
                 >
                     {isSaving ? (
                         <>
