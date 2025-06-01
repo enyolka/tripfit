@@ -21,6 +21,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.5.3",
     "@astrojs/node": "^9.1.3",
     "@astrojs/react": "4.2.2",
     "@astrojs/sitemap": "3.3.0",

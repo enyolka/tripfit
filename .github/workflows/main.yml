@@ -1,0 +1,134 @@
+name: Deploy to Cloudflare Pages
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+# Add permissions for the GitHub token
+permissions:
+    contents: read
+    deployments: write
+
+jobs:
+    lint:
+        name: Lint Code
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version-file: ".nvmrc"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Lint code
+              run: npm run lint
+              env:
+                  CI: true
+
+    unit-test:
+        name: Unit Tests
+        needs: lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version-file: ".nvmrc"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run unit tests
+              run: npm run test
+              env:
+                  CI: true
+
+    deploy:
+        name: Deploy to Cloudflare Pages
+        needs: [lint, unit-test]
+        runs-on: ubuntu-latest
+        environment: production
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version-file: ".nvmrc"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build project
+              run: npm run build
+              env:
+                  CI: true
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+                  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+            - name: Publish to Cloudflare Pages
+              uses: cloudflare/pages-action@v1
+              with:
+                  apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+                  projectName: tripfit
+                  directory: dist
+                  wranglerVersion: "3"
+
+    # status-comment:
+    #   name: Update Deployment Status
+    #   needs: [deploy]
+    #   if: always()
+    #   runs-on: ubuntu-latest
+    #   steps:
+    #     - name: Create status comment
+    #       uses: actions/github-script@v7
+    #       with:
+    #         script: |
+    #           const jobStatus = context.job.status;
+
+    #           const runId = context.runId;
+    #           const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+
+    #           let statusIcon = '✅';
+    #           let statusMessage = 'Deployment completed successfully!';
+
+    #           if ('${{ needs.lint.result }}' !== 'success' ||
+    #               '${{ needs.unit-test.result }}' !== 'success' ||
+    #               '${{ needs.deploy.result }}' !== 'success') {
+    #             statusIcon = '❌';
+    #             statusMessage = 'Deployment failed. Please check the pipeline logs.';
+    #           }
+
+    #           const commentBody = `## Deployment Status: ${statusIcon} ${statusMessage}
+
+    #           | Job | Status |
+    #           | --- | --- |
+    #           | Lint | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+    #           | Unit Tests | ${{ needs.unit-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+    #           | Deploy | ${{ needs.deploy.result == 'success' && '✅ Deployed' || '❌ Failed' }} |
+
+    #           [View detailed run](${runUrl})
+    #           `;
+
+    #           github.rest.repos.createCommitComment({
+    #             owner: context.repo.owner,
+    #             repo: context.repo.repo,
+    #             commit_sha: context.sha,
+    #             body: commentBody
+    #           });
